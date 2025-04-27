@@ -1,25 +1,46 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProviderWrapper } from './contexts/ThemeContext';
+import Auth from './components/Auth';
+import AnimalForm from './components/AnimalForm';
+import Articles from './components/Articles';
+import SubmitPost from './components/SubmitPost';
+import Settings from './components/Settings';
+import Navbar from './components/Navbar';
+import AnimalsList from "./components/AnimalsList";
+import pet from './assets/pet.png';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+const App = () => {
+    return (
+        <ThemeProviderWrapper>
+            <AuthProvider>
+                <Router>
+                    <Navbar />
+                    <Routes>
+                        <Route path="/" element={<Auth />} />
+                        <Route path="/animals" element={<AnimalsList
+                            animals={[
+                                {
+                                    id: 1,
+                                    name: "Телепузик",
+                                    species: "Собака",
+                                    breed: "Золотистый тушканчик",
+                                    age: 3,
+                                    image: pet
+                                }
+                            ]}
+                            onEdit={(animal) => console.log('Edit:', animal)}
+                        />} />
+                        <Route path="/add-animal" element={<AnimalForm />} />
+                        <Route path="/articles" element={<Articles />} />
+                        <Route path="/submit-post" element={<SubmitPost />} />
+                        <Route path="/settings" element={<Settings />} />
+                    </Routes>
+                </Router>
+            </AuthProvider>
+        </ThemeProviderWrapper>
+    );
+};
 
 export default App;
