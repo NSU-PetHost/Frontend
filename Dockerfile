@@ -8,4 +8,4 @@ RUN npm install
 
 COPY . ./
 
-CMD ["npm", "start", "--host", "0.0.0.0", "--port", "4444"]
+CMD ["npx", "vite", "--host", "0.0.0.0", "--port", "4444"]

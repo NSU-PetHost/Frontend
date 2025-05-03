@@ -18,7 +18,7 @@ import {
     Bookmark,
     ArrowForward
 } from '@mui/icons-material';
-import {useThemeContext} from "../contexts/ThemeContext";
+import {useThemeContext} from "../contexts/ThemeContext.jsx";
 
 const floatAnimation = keyframes`
     0% { transform: translateY(0); }

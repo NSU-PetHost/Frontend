@@ -11,7 +11,7 @@ import {
     VisibilityOff,
 } from '@mui/icons-material';
 import React, {useState} from "react";
-import {useThemeContext} from "../contexts/ThemeContext";
+import {useThemeContext} from "../contexts/ThemeContext.jsx";
 
 export const AuthForm = () => {
     const [isShowPassword, setIsShowPassword] = useState(false);

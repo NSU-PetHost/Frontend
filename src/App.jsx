@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { ThemeProviderWrapper } from './contexts/ThemeContext';
+import { AuthProvider } from './contexts/AuthContext.jsx';
+import { ThemeProviderWrapper } from './contexts/ThemeContext.jsx';
 import Auth from './components/Auth';
 import AnimalForm from './components/AnimalForm';
 import Articles from './components/Articles';

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AuthForm } from './AuthForm';
 import {Paper, Typography, Container, Divider, Link, IconButton, Box} from "@mui/material";
-import {useThemeContext} from "../contexts/ThemeContext";
+import {useThemeContext} from "../contexts/ThemeContext.jsx";
 import {RegisterForm} from "./RegisterForm";
 import google from '../assets/google.png';
 import yandex from '../assets/yandex.png';

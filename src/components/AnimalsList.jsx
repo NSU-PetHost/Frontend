@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import PetsIcon from '@mui/icons-material/Pets';
-import {useThemeContext} from "../contexts/ThemeContext";
+import {useThemeContext} from "../contexts/ThemeContext.jsx";
 
 const AnimalsList = ({ animals, onEdit, isLoading = false }) => {
     const { theme } = useThemeContext();

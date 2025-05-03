@@ -9,7 +9,7 @@ import {
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import React, {useState} from "react";
-import {useThemeContext} from "../contexts/ThemeContext";
+import {useThemeContext} from "../contexts/ThemeContext.jsx";
 
 export const RegisterForm = () => {
     const [isShowPassword, setIsShowPassword] = useState(false);
