@@ -4,21 +4,32 @@ import {
     IconButton,
     InputAdornment,
     Typography,
-    Link, TextField
+    Link, TextField, Alert
 } from '@mui/material';
 import {
     Visibility,
     VisibilityOff,
 } from '@mui/icons-material';
-import React, {useState} from "react";
+import React, {useContext, useState} from "react";
 import {useThemeContext} from "../contexts/ThemeContext.jsx";
+import {AuthContext} from "../contexts/AuthContext";
+import {SuccessMessage} from "./SuccessMessage";
 
 export const AuthForm = () => {
     const [isShowPassword, setIsShowPassword] = useState(false);
+    const { theme } = useThemeContext();
+    const { login, loading, error, clearError } = useContext(AuthContext);
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
+    const [errorLocal, setErrorLocal] = useState(null);
+    const [success, setSuccess] = useState(null);
+
+    const clearMessages = () => {
+        setErrorLocal(null);
+        setSuccess(null);
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -26,12 +37,20 @@ export const AuthForm = () => {
             ...prev,
             [name]: value
         }));
+        if (error) clearError();
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        clearMessages();
+        try {
+            await login(formData);
+            setSuccess('Вы успешно вошли!');
+        } catch (err) {
+            console.error('Login failed:', err);
+            setErrorLocal('Не удалось войти проверьте данные');
+        }
     };
-    const { theme } = useThemeContext();
 
     return (
         <>
@@ -50,6 +69,18 @@ export const AuthForm = () => {
             >
                 Вход в аккаунт
             </Typography>
+
+            {errorLocal && (
+                <Alert severity="error" onClose={clearMessages} sx={{ mb: 2 }}>
+                    {errorLocal}
+                </Alert>
+            )}
+
+            <SuccessMessage
+                message={success}
+                onClose={clearMessages}
+            />
+
             <Box
                 component="form"
                 onSubmit={handleSubmit}
@@ -131,9 +162,9 @@ export const AuthForm = () => {
                         variant="contained"
                         size="large"
                         sx={{width: '100%'}}
-                        disabled={!formData.email || !formData.password}
+                        disabled={loading || !formData.email || !formData.password}
                     >
-                        Вход
+                        {loading ? 'Загрузка...' : 'Вход'}
                     </Button>
                 </Box>
             </Box>

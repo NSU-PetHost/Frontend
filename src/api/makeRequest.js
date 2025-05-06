@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://84.237.52.214:4020";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://193.53.127.202:8080";
 
 const makeRequest = async ( method, url, dto, headers = { 'Content-Type': 'application/json' } ) => {
   try {
@@ -25,23 +25,28 @@ const makeRequest = async ( method, url, dto, headers = { 'Content-Type': 'appli
   } catch (error) {
     if (error.response) {
       console.error('API Response Error:', error.response);
+      const errorMessage = error.response.data?.message ||
+          error.response.data?.error ||
+          'An error occurred';
+
       switch (error.response.status) {
         case 400:
-          throw new Error(`Bad Request: ${error.response.data?.message || 'Invalid data sent'}`);
+          throw new Error(`Bad Request: ${errorMessage}`);
         case 401:
-          throw new Error(`Unauthorized: ${error.response.data?.message || 'Authentication required'}`);
+          throw new Error(`Unauthorized: ${errorMessage}`);
         case 403:
-          throw new Error(`Forbidden: ${error.response.data?.message || 'You do not have permission'}`);
+          throw new Error(`Forbidden: ${errorMessage}`);
         case 404:
-          throw new Error(`Not Found: ${error.response.data?.message || 'Requested resource not found'}`);
+          throw new Error(`Not Found: ${errorMessage}`);
         case 409:
-          throw new Error(`Conflict: ${error.response.data?.message || 'Conflict with existing resource'}`);
+          throw new Error(`Conflict: ${errorMessage}`);
         case 500:
-          throw new Error(`Internal Server Error: ${error.response.data?.message || 'Server error, please try again later'}`);
+          throw new Error(`Internal Server Error: ${errorMessage}`);
         default:
-          throw new Error(`API Error: ${error.response.status} - ${error.response.data?.message || 'An error occurred'}`);
+          throw new Error(`API Error: ${error.response.status} - ${errorMessage}`);
       }
     }
+    throw error;
   }
 };
 

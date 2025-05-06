@@ -8,8 +8,11 @@ import Articles from './components/Articles';
 import SubmitPost from './components/SubmitPost';
 import Settings from './components/Settings';
 import Navbar from './components/Navbar';
+import Home from './components/Home';
+import ForgotPassword from './components/ForgotPassword';
 import AnimalsList from "./components/AnimalsList";
 import pet from './assets/pet.png';
+import ChangePassword from "./components/ChangePassword";
 
 const App = () => {
     return (
@@ -18,7 +21,10 @@ const App = () => {
                 <Router>
                     <Navbar />
                     <Routes>
-                        <Route path="/" element={<Auth />} />
+                        <Route path="/" element={<Home />} />
+                        <Route path="/auth" element={<Auth />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/change-password" element={<ChangePassword />} />
                         <Route path="/animals" element={<AnimalsList
                             animals={[
                                 {

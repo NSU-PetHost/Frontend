@@ -4,17 +4,20 @@ import {
     IconButton,
     InputAdornment,
     Typography,
-    TextField
+    TextField, Alert
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import React, {useState} from "react";
+import React, {useContext, useState} from "react";
 import {useThemeContext} from "../contexts/ThemeContext.jsx";
+import {AuthContext} from "../contexts/AuthContext";
+import {SuccessMessage} from "./SuccessMessage";
 
 export const RegisterForm = () => {
     const [isShowPassword, setIsShowPassword] = useState(false);
     const [isShowPasswordConfirm, setIsShowPasswordConfirm] = useState(false);
     const { theme } = useThemeContext();
+    const { register, loading, error, clearError } = useContext(AuthContext);
     const [formData, setFormData] = useState({
         name: '',
         last_name: '',
@@ -22,6 +25,13 @@ export const RegisterForm = () => {
         password: '',
         password_confirmation: ''
     });
+    const [errorLocal, setErrorLocal] = useState(null);
+    const [success, setSuccess] = useState(null);
+
+    const clearMessages = () => {
+        setErrorLocal(null);
+        setSuccess(null);
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -29,10 +39,29 @@ export const RegisterForm = () => {
             ...prev,
             [name]: value
         }));
+        if (error) clearError();
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        clearMessages();
+        if (formData.password !== formData.password_confirmation) {
+            setErrorLocal('Пароли не совпадают!');
+            return;
+        }
+
+        try {
+            await register({
+                firstName: formData.name,
+                lastName: formData.last_name,
+                email: formData.email,
+                password: formData.password
+            });
+            setSuccess('Регистрация прошла успешно! Пожалуйста проверьте ваш почтовый ящик для подтверждения.');
+        } catch (err) {
+            console.error('Registration failed:', err);
+            setErrorLocal('Не удалось зарегистрироваться');
+        }
     };
 
     return (
@@ -52,6 +81,18 @@ export const RegisterForm = () => {
             >
                 Создать аккаунт
             </Typography>
+
+            {errorLocal && (
+                <Alert severity="error" onClose={clearMessages} sx={{ mb: 2 }}>
+                    {errorLocal}
+                </Alert>
+            )}
+
+            <SuccessMessage
+                message={success}
+                onClose={clearMessages}
+            />
+
             <Box
                 component="form"
                 onSubmit={handleSubmit}
@@ -192,9 +233,9 @@ export const RegisterForm = () => {
                         variant="contained"
                         size="large"
                         sx={{width: '100%'}}
-                        disabled={!formData.name || !formData.last_name || !formData.email || !formData.password || !formData.password_confirmation}
+                        disabled={loading || !formData.name || !formData.last_name || !formData.email || !formData.password || !formData.password_confirmation}
                     >
-                        Регистрация
+                        {loading ? 'Загрузка...' : 'Регистрация'}
                     </Button>
                 </Box>
             </Box>
