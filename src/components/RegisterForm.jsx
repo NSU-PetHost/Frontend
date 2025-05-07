@@ -278,7 +278,7 @@ export const RegisterForm = () => {
                         variant="contained"
                         size="large"
                         sx={{width: '100%'}}
-                        disabled={loading || !formData.name || !formData.last_name || !formData.email || !formData.password || !formData.password_confirmation}
+                        disabled={loading || !formData.name || !formData.patronymic || !formData.nickname || !formData.surname || !formData.email || !formData.password || !formData.password_confirmation}
                     >
                         {loading ? 'Загрузка...' : 'Регистрация'}
                     </Button>
