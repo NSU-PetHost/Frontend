@@ -59,11 +59,6 @@ const Navbar = () => {
     const { toggleTheme, isDarkTheme, theme } = useThemeContext();
     const [anchorEl, setAnchorEl] = useState(null);
     const { logout, getLoginStatus, getUserData } = useContext(AuthContext);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-    useEffect(() => {
-        setIsLoggedIn(false);
-    }, [getLoginStatus]);
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -169,7 +164,7 @@ const Navbar = () => {
                     transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                     anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
-                    {isLoggedIn ? (
+                    {getLoginStatus ? (
                         <>
                             <MenuItem onClick={handleProfileMenuClose}>
                                 <Box display="flex" alignItems="center" gap={2}>
