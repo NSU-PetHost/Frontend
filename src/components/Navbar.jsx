@@ -170,7 +170,7 @@ const Navbar = () => {
                     anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
                     {getLoginStatus() ? (
-                        <>
+                        <div>
                             <MenuItem onClick={handleProfileMenuClose}>
                                 <Box display="flex" alignItems="center" gap={2}>
                                     <Avatar sx={{ bgcolor: theme.primary.main }}>
@@ -190,9 +190,9 @@ const Navbar = () => {
                             <MenuItem onClick={handleLogout}>
                                 <ExitToAppIcon sx={{ mr: 2 }} /> Выйти
                             </MenuItem>
-                        </>
+                        </div>
                     ) : (
-                        <>
+                        <div>
                             <Box px={2} py={1}>
                                 <Typography variant="subtitle1">Войдите в аккаунт</Typography>
                                 <Typography variant="body2" color="text.secondary">
@@ -219,7 +219,7 @@ const Navbar = () => {
                                     Регистрация
                                 </Button>
                             </Box>
-                        </>
+                        </div>
                     )}
                 </Menu>
             </Box>

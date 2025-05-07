@@ -90,7 +90,7 @@ export const RegisterForm = () => {
             await sleep(2000);
             setUserData(formData.email, formData.nickname, formData.firstName, formData.surname, formData.patronymic);
             setLoginStatus(false);
-            navigate('/login');
+            navigate('/auth?page=login');
         } catch (err) {
             console.error('Confirmation failed:', err);
             setErrorLocal('Не удалось подтвердить почтовый ящик. Попробуйте снова');
