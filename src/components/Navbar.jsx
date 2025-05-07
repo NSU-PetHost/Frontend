@@ -164,15 +164,19 @@ const Navbar = () => {
                     transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                     anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
-                    {getLoginStatus ? (
+                    {getLoginStatus() ? (
                         <>
                             <MenuItem onClick={handleProfileMenuClose}>
                                 <Box display="flex" alignItems="center" gap={2}>
-                                    <Avatar sx={{ bgcolor: theme.primary.main }}>{getUserData["nickname"] ? getUserData["nickname"].charAt(0).toUpperCase() : 'U'}</Avatar>
+                                    <Avatar sx={{ bgcolor: theme.primary.main }}>
+                                        {getUserData()?.nickname?.charAt(0).toUpperCase() || 'U'}
+                                    </Avatar>
                                     <Box>
-                                        <Typography fontWeight="bold">{getUserData["nickname"]}</Typography>
+                                        <Typography fontWeight="bold">
+                                            {getUserData()?.nickname || 'Пользователь'}
+                                        </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            {getUserData["email"]}
+                                            {getUserData()?.email}
                                         </Typography>
                                     </Box>
                                 </Box>
