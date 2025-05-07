@@ -138,6 +138,7 @@ export const RegisterForm = () => {
                         onChange={handleChangeCode}
                         required
                         sx={{
+                            mb: 2,
                             '& .MuiOutlinedInput-root': {
                                 borderRadius: '8px',
                                 borderWidth: '2px',
