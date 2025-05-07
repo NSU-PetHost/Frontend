@@ -12,6 +12,7 @@ import React, {useContext, useState} from "react";
 import {useThemeContext} from "../contexts/ThemeContext.jsx";
 import {AuthContext} from "../contexts/AuthContext";
 import {SuccessMessage} from "./SuccessMessage";
+import {generateNickname} from "../utils/utils";
 
 export const RegisterForm = () => {
     const [isShowPassword, setIsShowPassword] = useState(false);
@@ -20,7 +21,9 @@ export const RegisterForm = () => {
     const { register, loading, error, clearError } = useContext(AuthContext);
     const [formData, setFormData] = useState({
         name: '',
-        last_name: '',
+        nickname: generateNickname(),
+        surname: '',
+        patronymic: '',
         email: '',
         password: '',
         password_confirmation: ''
@@ -53,7 +56,9 @@ export const RegisterForm = () => {
         try {
             await register({
                 firstName: formData.name,
-                lastName: formData.last_name,
+                surname: formData.surname,
+                patronymic: formData.patronymic,
+                nickname: formData.nickname,
                 email: formData.email,
                 password: formData.password
             });
@@ -102,6 +107,26 @@ export const RegisterForm = () => {
                 <TextField
                     fullWidth
                     variant="outlined"
+                    label="Никнейм"
+                    type="text"
+                    name="nickname"
+                    value={formData.nickname}
+                    onChange={handleChange}
+                    required
+                    placeholder="Ivan2004"
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                            borderWidth: '2px',
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.primary.main,
+                            },
+                        },
+                    }}
+                />
+                <TextField
+                    fullWidth
+                    variant="outlined"
                     label="Имя"
                     type="text"
                     name="name"
@@ -124,11 +149,31 @@ export const RegisterForm = () => {
                     variant="outlined"
                     label="Фамилия"
                     type="text"
-                    name="last_name"
-                    value={formData.last_name}
+                    name="surname"
+                    value={formData.surname}
                     onChange={handleChange}
                     required
                     placeholder="Иванов"
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                            borderWidth: '2px',
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: theme.primary.main,
+                            },
+                        },
+                    }}
+                />
+                <TextField
+                    fullWidth
+                    variant="outlined"
+                    label="Отчество"
+                    type="text"
+                    name="patronymic"
+                    value={formData.patronymic}
+                    onChange={handleChange}
+                    required
+                    placeholder="Иванович"
                     sx={{
                         '& .MuiOutlinedInput-root': {
                             borderRadius: '8px',
