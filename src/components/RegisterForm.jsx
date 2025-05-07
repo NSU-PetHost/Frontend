@@ -76,11 +76,10 @@ export const RegisterForm = () => {
             });
             await confirmEmail(formData.email);
             setSuccess('Регистрация прошла успешно! Пожалуйста проверьте ваш почтовый ящик для подтверждения.');
+            setCodeMode(true);
         } catch (err) {
             console.error('Registration failed:', err);
             setErrorLocal('Не удалось зарегистрироваться');
-        } finally {
-            setCodeMode(true);
         }
     };
 
