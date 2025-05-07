@@ -169,13 +169,13 @@ const Navbar = () => {
                             <MenuItem onClick={handleProfileMenuClose}>
                                 <Box display="flex" alignItems="center" gap={2}>
                                     <Avatar sx={{ bgcolor: theme.primary.main }}>
-                                        {(userInfo?.nickname || localStorage.getItem('nickname') || 'U').charAt(0)}
+                                        {(userInfo?.nickname || localStorage.getItem('nickname') || 'U').charAt(0).toUpperCase()}
                                     </Avatar>
                                     <Box>
                                         <Typography fontWeight="bold">
                                             {userInfo?.nickname || localStorage.getItem('nickname') || 'Пользователь'}
                                         </Typography>
-                                        <Typography variant="body2" color="text.secondary">
+                                        <Typography variant="body3" color="text.secondary">
                                             {localStorage.getItem('email') || userInfo?.email || ''}
                                         </Typography>
                                     </Box>
