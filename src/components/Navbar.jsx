@@ -58,7 +58,7 @@ const Navbar = () => {
     const navigate = useNavigate();
     const { toggleTheme, isDarkTheme, theme } = useThemeContext();
     const [anchorEl, setAnchorEl] = useState(null);
-    const { logout, getLoginStatus, getUserData } = useContext(AuthContext);
+    const { logout, getLoginStatus, userInfo } = useContext(AuthContext);
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -169,14 +169,14 @@ const Navbar = () => {
                             <MenuItem onClick={handleProfileMenuClose}>
                                 <Box display="flex" alignItems="center" gap={2}>
                                     <Avatar sx={{ bgcolor: theme.primary.main }}>
-                                        {getUserData()?.nickname?.charAt(0).toUpperCase() || 'U'}
+                                        {userInfo?.nickname?.charAt(0).toUpperCase() || 'U'}
                                     </Avatar>
                                     <Box>
                                         <Typography fontWeight="bold">
-                                            {getUserData()?.nickname || 'Пользователь'}
+                                            {userInfo?.nickname || 'Пользователь'}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            {getUserData()?.email}
+                                            {userInfo?.email}
                                         </Typography>
                                     </Box>
                                 </Box>

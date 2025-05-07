@@ -66,10 +66,6 @@ export const AuthProvider = ({ children }) => {
         setUserInfo({email: email, nickname: nickname, firstName: firstName, surname: surname, patronymic: patronymic});
     };
 
-    const getUserData = () => {
-        return userInfo;
-    };
-
     const login = async (credentials) => {
         setLoading(true);
         try {
@@ -178,7 +174,7 @@ export const AuthProvider = ({ children }) => {
             changePassword,
             getUserInfo,
             setUserData,
-            getUserData,
+            userInfo,
             setLoginStatus,
             getLoginStatus
         }}>
