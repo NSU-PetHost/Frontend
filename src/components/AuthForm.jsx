@@ -14,17 +14,20 @@ import React, {useContext, useState} from "react";
 import {useThemeContext} from "../contexts/ThemeContext.jsx";
 import {AuthContext} from "../contexts/AuthContext";
 import {SuccessMessage} from "./SuccessMessage";
+import {useNavigate} from "react-router-dom";
 
 export const AuthForm = () => {
     const [isShowPassword, setIsShowPassword] = useState(false);
     const { theme } = useThemeContext();
     const { login, loading, error, clearError } = useContext(AuthContext);
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
     const [errorLocal, setErrorLocal] = useState(null);
     const [success, setSuccess] = useState(null);
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     const clearMessages = () => {
         setErrorLocal(null);
@@ -46,6 +49,8 @@ export const AuthForm = () => {
         try {
             await login(formData);
             setSuccess('Вы успешно вошли!');
+            await sleep(2000);
+            navigate('/protect');
         } catch (err) {
             console.error('Login failed:', err);
             setErrorLocal('Не удалось войти проверьте данные');

@@ -13,12 +13,14 @@ import {useThemeContext} from "../contexts/ThemeContext.jsx";
 import {AuthContext} from "../contexts/AuthContext";
 import {SuccessMessage} from "./SuccessMessage";
 import {generateNickname} from "../utils/utils";
+import {useNavigate} from "react-router-dom";
 
 export const RegisterForm = () => {
     const [isShowPassword, setIsShowPassword] = useState(false);
     const [isShowPasswordConfirm, setIsShowPasswordConfirm] = useState(false);
     const { theme } = useThemeContext();
-    const { register, loading, error, clearError } = useContext(AuthContext);
+    const navigate = useNavigate();
+    const { register, loading, error, clearError, confirmEmail, confirmCode } = useContext(AuthContext);
     const [formData, setFormData] = useState({
         name: '',
         nickname: generateNickname(),
@@ -29,7 +31,9 @@ export const RegisterForm = () => {
         password_confirmation: ''
     });
     const [errorLocal, setErrorLocal] = useState(null);
+    const [codeMode, setCodeMode] = useState(false);
     const [success, setSuccess] = useState(null);
+    const [confirmationCode, setConfirmationCode] = useState(null)
 
     const clearMessages = () => {
         setErrorLocal(null);
@@ -42,6 +46,14 @@ export const RegisterForm = () => {
             ...prev,
             [name]: value
         }));
+        if (error) clearError();
+    };
+
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const handleChangeCode = (e) => {
+        const { value } = e.target;
+        setConfirmationCode(value);
         if (error) clearError();
     };
 
@@ -62,10 +74,27 @@ export const RegisterForm = () => {
                 email: formData.email,
                 password: formData.password
             });
+            await confirmEmail(formData.email);
             setSuccess('Регистрация прошла успешно! Пожалуйста проверьте ваш почтовый ящик для подтверждения.');
         } catch (err) {
             console.error('Registration failed:', err);
             setErrorLocal('Не удалось зарегистрироваться');
+        } finally {
+            setCodeMode(true);
+        }
+    };
+
+    const handleConfirm = async (e) => {
+        try {
+            await confirmCode(formData.email, confirmationCode);
+            setSuccess('Почта успешно подтверждена.');
+            await sleep(2000);
+            navigate('/protect');
+        } catch (err) {
+            console.error('Confirmation failed:', err);
+            setErrorLocal('Не удалось подтвердить почтовый ящик. Попробуйте снова');
+        } finally {
+            setConfirmationCode(null);
         }
     };
 
@@ -97,193 +126,233 @@ export const RegisterForm = () => {
                 message={success}
                 onClose={clearMessages}
             />
-
-            <Box
-                component="form"
-                onSubmit={handleSubmit}
-                autoComplete='off'
-                sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-            >
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    label="Никнейм"
-                    type="text"
-                    name="nickname"
-                    value={formData.nickname}
-                    onChange={handleChange}
-                    required
-                    placeholder="Ivan2004"
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '8px',
-                            borderWidth: '2px',
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: theme.primary.main,
+            { codeMode ? (
+                <>
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        label="Код подтверждения"
+                        type="text"
+                        name="confirmationCode"
+                        value={confirmationCode}
+                        onChange={handleChangeCode}
+                        required
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                borderWidth: '2px',
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: theme.primary.main,
+                                },
                             },
-                        },
-                    }}
-                />
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    label="Имя"
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    placeholder="Иван"
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '8px',
-                            borderWidth: '2px',
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: theme.primary.main,
-                            },
-                        },
-                    }}
-                />
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    label="Фамилия"
-                    type="text"
-                    name="surname"
-                    value={formData.surname}
-                    onChange={handleChange}
-                    required
-                    placeholder="Иванов"
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '8px',
-                            borderWidth: '2px',
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: theme.primary.main,
-                            },
-                        },
-                    }}
-                />
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    label="Отчество"
-                    type="text"
-                    name="patronymic"
-                    value={formData.patronymic}
-                    onChange={handleChange}
-                    required
-                    placeholder="Иванович"
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '8px',
-                            borderWidth: '2px',
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: theme.primary.main,
-                            },
-                        },
-                    }}
-                />
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    label="Эл. почта"
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    placeholder="your@email.com"
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '8px',
-                            borderWidth: '2px',
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: theme.primary.main,
-                            },
-                        },
-                    }}
-                />
-
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    label="Пароль"
-                    type={isShowPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    placeholder="••••••••"
-                    InputProps={{
-                        endAdornment: (
-                            <InputAdornment position="end">
-                                <IconButton
-                                    edge="end"
-                                    onClick={() => setIsShowPassword(!isShowPassword)}
-                                    sx={{ color: theme.text.secondary }}
-                                >
-                                    {isShowPassword ? <VisibilityOff /> : <Visibility />}
-                                </IconButton>
-                            </InputAdornment>
-                        ),
-                    }}
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '8px',
-                            borderWidth: '2px',
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: theme.primary.main,
-                            },
-                        },
-                    }}
-                />
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    label="Повторить пароль"
-                    type={isShowPasswordConfirm ? 'text' : 'password'}
-                    name="password_confirmation"
-                    value={formData.password_confirmation}
-                    onChange={handleChange}
-                    required
-                    placeholder="••••••••"
-                    InputProps={{
-                        endAdornment: (
-                            <InputAdornment position="end">
-                                <IconButton
-                                    edge="end"
-                                    onClick={() => setIsShowPasswordConfirm(!isShowPasswordConfirm)}
-                                    sx={{ color: theme.text.secondary }}
-                                >
-                                    {isShowPasswordConfirm ? <VisibilityOff /> : <Visibility />}
-                                </IconButton>
-                            </InputAdornment>
-                        ),
-                    }}
-                    sx={{
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '8px',
-                            borderWidth: '2px',
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: theme.primary.main,
-                            },
-                        },
-                    }}
-                />
-
-                <Box>
+                            '& .MuiInputBase-input': {
+                                textAlign: 'center',
+                                letterSpacing: '8px',
+                                fontSize: '24px',
+                                fontWeight: 'bold'
+                            }
+                        }}
+                    />
                     <Button
-                        type="submit"
                         variant="contained"
                         size="large"
                         sx={{width: '100%'}}
-                        disabled={loading || !formData.name || !formData.patronymic || !formData.nickname || !formData.surname || !formData.email || !formData.password || !formData.password_confirmation}
+                        disabled={loading || !confirmationCode}
+                        onClick={handleConfirm}
                     >
-                        {loading ? 'Загрузка...' : 'Регистрация'}
+                        {loading ? 'Загрузка...' : 'Подтвердить'}
                     </Button>
+                </>
+            ) : (
+                <Box
+                    component="form"
+                    onSubmit={handleSubmit}
+                    autoComplete='off'
+                    sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+                >
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        label="Никнейм"
+                        type="text"
+                        name="nickname"
+                        value={formData.nickname}
+                        onChange={handleChange}
+                        required
+                        placeholder="Ivan2004"
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                borderWidth: '2px',
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: theme.primary.main,
+                                },
+                            },
+                        }}
+                    />
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        label="Имя"
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                        placeholder="Иван"
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                borderWidth: '2px',
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: theme.primary.main,
+                                },
+                            },
+                        }}
+                    />
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        label="Фамилия"
+                        type="text"
+                        name="surname"
+                        value={formData.surname}
+                        onChange={handleChange}
+                        required
+                        placeholder="Иванов"
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                borderWidth: '2px',
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: theme.primary.main,
+                                },
+                            },
+                        }}
+                    />
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        label="Отчество"
+                        type="text"
+                        name="patronymic"
+                        value={formData.patronymic}
+                        onChange={handleChange}
+                        required
+                        placeholder="Иванович"
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                borderWidth: '2px',
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: theme.primary.main,
+                                },
+                            },
+                        }}
+                    />
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        label="Эл. почта"
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        placeholder="your@email.com"
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                borderWidth: '2px',
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: theme.primary.main,
+                                },
+                            },
+                        }}
+                    />
+
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        label="Пароль"
+                        type={isShowPassword ? 'text' : 'password'}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        placeholder="••••••••"
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        edge="end"
+                                        onClick={() => setIsShowPassword(!isShowPassword)}
+                                        sx={{ color: theme.text.secondary }}
+                                    >
+                                        {isShowPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                borderWidth: '2px',
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: theme.primary.main,
+                                },
+                            },
+                        }}
+                    />
+                    <TextField
+                        fullWidth
+                        variant="outlined"
+                        label="Повторить пароль"
+                        type={isShowPasswordConfirm ? 'text' : 'password'}
+                        name="password_confirmation"
+                        value={formData.password_confirmation}
+                        onChange={handleChange}
+                        required
+                        placeholder="••••••••"
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        edge="end"
+                                        onClick={() => setIsShowPasswordConfirm(!isShowPasswordConfirm)}
+                                        sx={{ color: theme.text.secondary }}
+                                    >
+                                        {isShowPasswordConfirm ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '8px',
+                                borderWidth: '2px',
+                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: theme.primary.main,
+                                },
+                            },
+                        }}
+                    />
+
+                    <Box>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            size="large"
+                            sx={{width: '100%'}}
+                            disabled={loading || !formData.name || !formData.patronymic || !formData.nickname || !formData.surname || !formData.email || !formData.password || !formData.password_confirmation}
+                        >
+                            {loading ? 'Загрузка...' : 'Регистрация'}
+                        </Button>
+                    </Box>
                 </Box>
-            </Box>
+            )}
+
+
         </>
     );
 };

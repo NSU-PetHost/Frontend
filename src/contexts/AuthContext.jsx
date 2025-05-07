@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
     const confirmCode = async (email, code) => {
         setLoading(true);
         try {
-            return await makeRequest('POST', '/api/v1/auth/confirmCode', {email, code});
+            return await makeRequest('POST', '/api/v1/auth/confirmCode', {email, verifyCode: code});
         } catch (err) {
             setError(err.message);
             throw err;
@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
     const resetPassword = async (email) => {
         setLoading(true);
         try {
-            return await makeRequest('POST', '/api/v1/auth/resetPassword', {email});
+            return await makeRequest('POST', `/api/v1/auth/resetPassword?email=${email}`);
         } catch (err) {
             setError(err.message);
             throw err;

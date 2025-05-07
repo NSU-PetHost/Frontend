@@ -15,6 +15,7 @@ export const ChangePasswordForm = () => {
         confirm: false
     });
     const [formData, setFormData] = useState({
+        email: '',
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
