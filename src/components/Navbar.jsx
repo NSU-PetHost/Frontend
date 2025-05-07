@@ -58,9 +58,14 @@ const Navbar = () => {
     const navigate = useNavigate();
     const { toggleTheme, isDarkTheme, theme } = useThemeContext();
     const [anchorEl, setAnchorEl] = useState(null);
-    const { logout, getLoginStatus, userInfo } = useContext(AuthContext);
+    const { logout, getLoginStatus, userInfo, getUserInfo } = useContext(AuthContext);
 
-    const handleProfileMenuOpen = (event) => {
+    const handleProfileMenuOpen = async (event) => {
+        if (localStorage.getItem('nickname') && localStorage.getItem('email')) {
+            const result = await getUserInfo();
+            localStorage.setItem('nickname', result.firstName);
+            localStorage.setItem('email', result.email);
+        }
         setAnchorEl(event.currentTarget);
     };
 
@@ -169,14 +174,14 @@ const Navbar = () => {
                             <MenuItem onClick={handleProfileMenuClose}>
                                 <Box display="flex" alignItems="center" gap={2}>
                                     <Avatar sx={{ bgcolor: theme.primary.main }}>
-                                        {userInfo?.nickname?.charAt(0).toUpperCase() || 'U'}
+                                        {localStorage.getItem('nickname')?.charAt(0).toUpperCase() || userInfo?.nickname?.charAt(0).toUpperCase() || 'U'}
                                     </Avatar>
                                     <Box>
                                         <Typography fontWeight="bold">
-                                            {userInfo?.nickname || 'Пользователь'}
+                                            {localStorage.getItem('nickname') || userInfo?.nickname || 'Пользователь'}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            {userInfo?.email}
+                                            {localStorage.getItem('email') || userInfo?.email || ''}
                                         </Typography>
                                     </Box>
                                 </Box>

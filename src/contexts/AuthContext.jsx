@@ -56,14 +56,20 @@ export const AuthProvider = ({ children }) => {
 
     const setLoginStatus = (isLogin) => {
         setIsLogin(isLogin);
+        localStorage.setItem('isLogin', isLogin ? 'login' : '');
     };
 
     const getLoginStatus = () => {
-        return isLogin;
+        return isLogin || localStorage.getItem('isLogin');
     };
 
     const setUserData = (email, nickname, firstName, surname, patronymic) => {
         setUserInfo({email: email, nickname: nickname, firstName: firstName, surname: surname, patronymic: patronymic});
+        localStorage.setItem('email', email);
+        localStorage.setItem('nickname', nickname);
+        localStorage.setItem('firstName', firstName);
+        localStorage.setItem('surname', surname);
+        localStorage.setItem('patronymic', patronymic);
     };
 
     const login = async (credentials) => {
@@ -135,13 +141,11 @@ export const AuthProvider = ({ children }) => {
         setLoading(true);
         try {
             const accessToken = localStorage.getItem('accessToken');
-            const response = await makeRequest('GET', '/api/v1/info/', null,
+            return await makeRequest('GET', '/api/v1/info/', null,
                 {
                     'Authorization': `Bearer ${accessToken}`
                 }
             );
-            setUser(response);
-            return response;
         } catch (err) {
             setError(err.message);
             throw err;
@@ -153,6 +157,11 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         setLoginStatus(false);
         setUserData('', '', '', '', '');
+        localStorage.removeItem('email');
+        localStorage.removeItem('nickname');
+        localStorage.removeItem('firstName');
+        localStorage.removeItem('surname');
+        localStorage.removeItem('patronymic');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         setUser(null);
