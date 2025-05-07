@@ -1,12 +1,14 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, {useContext, useEffect, useState} from 'react';
+import {Link, useNavigate} from 'react-router-dom';
 import { useThemeContext } from '../contexts/ThemeContext.jsx';
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import NotificationsIcon from "@mui/icons-material/Notifications";
+import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import styled from 'styled-components';
-import {IconButton, Box, Divider} from '@mui/material';
+import {IconButton, Box, Divider, Menu, MenuItem, Typography, Avatar, Button} from '@mui/material';
+import {AuthContext} from "../contexts/AuthContext";
 
 const NavbarContainer = styled.nav`
     display: flex;
@@ -53,7 +55,42 @@ const NavbarLink = styled(Link)`
 `;
 
 const Navbar = () => {
+    const navigate = useNavigate();
     const { toggleTheme, isDarkTheme, theme } = useThemeContext();
+    const [anchorEl, setAnchorEl] = useState(null);
+    const { logout, getLoginStatus, getUserData } = useContext(AuthContext);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    useEffect(() => {
+        setIsLoggedIn(false);
+    }, [getLoginStatus]);
+
+    const handleProfileMenuOpen = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleProfileMenuRegisterClose = () => {
+        handleProfileMenuClose();
+        navigate('/auth?page=register')
+    }
+
+    const handleProfileMenuLoginClose = () => {
+        handleProfileMenuClose();
+        navigate('/auth?page=login')
+    }
+
+    const handleProfileMenuClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            handleProfileMenuClose();
+        } catch (error) {
+            console.error("Logout error:", error);
+        }
+    };
 
     return (
         <NavbarContainer>
@@ -65,8 +102,8 @@ const Navbar = () => {
                 <NavbarLink to="/submit-post">ДОБАВИТЬ ПИТОМЦА</NavbarLink>
                 <NavbarLink to="/settings">НАСТРОЙКИ</NavbarLink>
             </NavItems>
-            <Box display="flex" flexDirection="row" gap={2} alignItems="center">
-                <Box sx={{ mt: 2, mb: 2 }} alignContent="center" display="flex" gap={1} >
+            <Box display="flex" sx={{ flexDirection: { xs: "column", md: "row" } }} gap={2} alignItems="center">
+                <Box sx={{ flexDirection: { xs: "column", sm: "row" }, mt: 2, mb: 2 }} alignContent="center" display="flex" gap={1} >
                     <IconButton
                         aria-label="theme"
                         sx={{
@@ -96,6 +133,7 @@ const Navbar = () => {
                 </Box>
                 <IconButton
                     aria-label="profile"
+                    onClick={handleProfileMenuOpen}
                     sx={{
                         color: theme.primary.dark,
                         bgcolor: theme.background.paper,
@@ -108,6 +146,78 @@ const Navbar = () => {
                 >
                     <AccountCircleIcon fontSize="inherit" />
                 </IconButton>
+                <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleProfileMenuClose}
+                    PaperProps={{
+                        elevation: 4,
+                        sx: {
+                            width: 280,
+                            borderRadius: '12px',
+                            padding: '8px 0',
+                            mt: 1,
+                            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                            '& .MuiMenuItem-root': {
+                                padding: '10px 16px',
+                                borderRadius: '8px',
+                                margin: '0 8px',
+                                minHeight: '48px'
+                            }
+                        }
+                    }}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                >
+                    {isLoggedIn ? (
+                        <>
+                            <MenuItem onClick={handleProfileMenuClose}>
+                                <Box display="flex" alignItems="center" gap={2}>
+                                    <Avatar sx={{ bgcolor: theme.primary.main }}>{getUserData["nickname"] ? getUserData["nickname"].charAt(0).toUpperCase() : 'U'}</Avatar>
+                                    <Box>
+                                        <Typography fontWeight="bold">{getUserData["nickname"]}</Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {getUserData["email"]}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            </MenuItem>
+                            <Divider sx={{ my: 1 }} />
+                            <MenuItem onClick={handleLogout}>
+                                <ExitToAppIcon sx={{ mr: 2 }} /> Выйти
+                            </MenuItem>
+                        </>
+                    ) : (
+                        <>
+                            <Box px={2} py={1}>
+                                <Typography variant="subtitle1">Войдите в аккаунт</Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Чтобы получить доступ ко всем функциям
+                                </Typography>
+                            </Box>
+                            <Box px={2} py={1} display="flex" gap={1}>
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    onClick={handleProfileMenuLoginClose}
+                                    sx={{
+                                        bgcolor: theme.primary.main,
+                                        '&:hover': { bgcolor: theme.primary.dark }
+                                    }}
+                                >
+                                    Войти
+                                </Button>
+                                <Button
+                                    fullWidth
+                                    variant="outlined"
+                                    onClick={handleProfileMenuRegisterClose}
+                                >
+                                    Регистрация
+                                </Button>
+                            </Box>
+                        </>
+                    )}
+                </Menu>
             </Box>
         </NavbarContainer>
     );

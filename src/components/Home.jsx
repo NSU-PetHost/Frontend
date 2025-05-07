@@ -9,14 +9,6 @@ const Home = () => {
             <Typography variant="h3" gutterBottom>
                 Добро пожаловать в PetHost!
             </Typography>
-            <Button
-                variant="contained"
-                size="large"
-                onClick={() => navigate('/auth')}
-                sx={{ mt: 2 }}
-            >
-                Создать аккаунт
-            </Button>
         </Box>
     );
 };

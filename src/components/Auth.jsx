@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { AuthForm } from './AuthForm';
-import {Paper, Typography, Container, Divider, Link, IconButton, Box} from "@mui/material";
+import {Paper, Typography, Container, Divider, Link} from "@mui/material";
 import {useThemeContext} from "../contexts/ThemeContext.jsx";
 import {RegisterForm} from "./RegisterForm";
-import google from '../assets/google.png';
-import yandex from '../assets/yandex.png';
-import vk from '../assets/vk.png';
-import telegram from '../assets/telegram.png';
+import {useSearchParams} from "react-router-dom";
 
 const Auth = () => {
-    const [isLogin, setIsLogin] = useState(true);
+    const [searchParams] = useSearchParams();
+    const [isLogin, setIsLogin] = useState(false);
     const {
         theme,
     } = useThemeContext();
 
-
+    useEffect(() => {
+        if (searchParams.get("page") === "login") {
+            setIsLogin(true);
+        }
+    }, [searchParams])
     return (
         <Container maxWidth="md" sx={{ py: 4 }}>
             <Paper elevation={3} sx={{p: 4, overflow: 'hidden', borderRadius: 4, bgcolor: theme.background.paper}}>
@@ -26,38 +28,8 @@ const Auth = () => {
                                 или
                             </Typography>
                         </Divider>
-                        <Box display="flex" justifyContent="center" gap={4}>
-                            <IconButton>
-                                <img
-                                    src={google}
-                                    alt="Google"
-                                    style={{ width: 32, height: 32 }}
-                                />
-                            </IconButton>
-                            <IconButton>
-                                <img
-                                    src={telegram}
-                                    alt="Telegram"
-                                    style={{ width: 32, height: 32 }}
-                                />
-                            </IconButton>
-                            <IconButton>
-                                <img
-                                    src={yandex}
-                                    alt="Yandex"
-                                    style={{ width: 32, height: 32 }}
-                                />
-                            </IconButton>
-                            <IconButton>
-                                <img
-                                    src={vk}
-                                    alt="ВКонтакте"
-                                    style={{ width: 32, height: 32 }}
-                                />
-                            </IconButton>
-                        </Box>
                         <Typography mt={2} style={{fontSize: '0.9rem'}}>
-                            У вас нет учетной записи?{' '}
+                            Если у вас нет учетной записи?{' '}
                             <Link sx={{cursor: "pointer"}} color={theme.secondary.dark} onClick={()=>setIsLogin(false)}>
                                 Зарегистрируйтесь
                             </Link>.

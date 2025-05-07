@@ -19,7 +19,7 @@ import {useNavigate} from "react-router-dom";
 export const AuthForm = () => {
     const [isShowPassword, setIsShowPassword] = useState(false);
     const { theme } = useThemeContext();
-    const { login, loading, error, clearError } = useContext(AuthContext);
+    const { login, loading, error, clearError, setLoginStatus } = useContext(AuthContext);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
@@ -50,6 +50,7 @@ export const AuthForm = () => {
             await login(formData);
             setSuccess('Вы успешно вошли!');
             await sleep(2000);
+            setLoginStatus(true);
             navigate('/protect');
         } catch (err) {
             console.error('Login failed:', err);

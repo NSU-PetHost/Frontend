@@ -20,7 +20,7 @@ export const RegisterForm = () => {
     const [isShowPasswordConfirm, setIsShowPasswordConfirm] = useState(false);
     const { theme } = useThemeContext();
     const navigate = useNavigate();
-    const { register, loading, error, clearError, confirmEmail, confirmCode } = useContext(AuthContext);
+    const { register, loading, error, clearError, confirmEmail, confirmCode, setLoginStatus, setUserData } = useContext(AuthContext);
     const [formData, setFormData] = useState({
         name: '',
         nickname: generateNickname(),
@@ -89,7 +89,9 @@ export const RegisterForm = () => {
             await confirmCode(formData.email, confirmationCode);
             setSuccess('Почта успешно подтверждена.');
             await sleep(2000);
-            navigate('/protect');
+            setUserData(formData.email, formData.nickname, formData.firstName, formData.surname, formData.patronymic);
+            setLoginStatus(false);
+            navigate('/login');
         } catch (err) {
             console.error('Confirmation failed:', err);
             setErrorLocal('Не удалось подтвердить почтовый ящик. Попробуйте снова');

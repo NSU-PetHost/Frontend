@@ -5,6 +5,14 @@ export const AuthContext = createContext(undefined);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [userInfo, setUserInfo] = useState({
+        email: '',
+        nickname: '',
+        firstName: '',
+        surname: '',
+        patronymic: '',
+    });
+    const [isLogin, setIsLogin] = useState(false)
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -46,17 +54,30 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const setLoginStatus = (isLogin) => {
+        setIsLogin(isLogin);
+    };
+
+    const getLoginStatus = () => {
+        return isLogin;
+    };
+
+    const setUserData = (email, nickname, firstName, surname, patronymic) => {
+        setUserInfo({email: email, nickname: nickname, firstName: firstName, surname: surname, patronymic: patronymic});
+    };
+
+    const getUserData = () => {
+        return userInfo;
+    };
+
     const login = async (credentials) => {
         setLoading(true);
         try {
             const response = await makeRequest('POST', '/api/v1/auth/login', credentials);
-            const { accessToken, refreshToken, user: userData } = response;
+            const { accessToken, refreshToken } = response;
 
             localStorage.setItem('accessToken', accessToken);
             localStorage.setItem('refreshToken', refreshToken);
-
-            setUser(userData);
-            return userData;
         } catch (err) {
             setError(err.message);
             throw err;
@@ -134,6 +155,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
+        setLoginStatus(false);
+        setUserData('', '', '', '', '');
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         setUser(null);
@@ -153,7 +176,11 @@ export const AuthProvider = ({ children }) => {
             refreshToken,
             resetPassword,
             changePassword,
-            getUserInfo
+            getUserInfo,
+            setUserData,
+            getUserData,
+            setLoginStatus,
+            getLoginStatus
         }}>
             {children}
         </AuthContext.Provider>
