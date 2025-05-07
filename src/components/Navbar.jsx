@@ -172,10 +172,25 @@ const Navbar = () => {
                                         {(userInfo?.nickname || localStorage.getItem('nickname') || 'U').charAt(0).toUpperCase()}
                                     </Avatar>
                                     <Box>
-                                        <Typography fontWeight="bold">
+                                        <Typography
+                                            fontWeight="bold"
+                                            noWrap
+                                            sx={{
+                                                textOverflow: 'ellipsis',
+                                                overflow: 'hidden'
+                                            }}
+                                        >
                                             {userInfo?.nickname || localStorage.getItem('nickname') || 'Пользователь'}
                                         </Typography>
-                                        <Typography variant="body3" color="text.secondary">
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                            noWrap
+                                            sx={{
+                                                textOverflow: 'ellipsis',
+                                                overflow: 'hidden'
+                                            }}
+                                        >
                                             {localStorage.getItem('email') || userInfo?.email || ''}
                                         </Typography>
                                     </Box>
