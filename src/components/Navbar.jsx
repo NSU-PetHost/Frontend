@@ -58,14 +58,9 @@ const Navbar = () => {
     const navigate = useNavigate();
     const { toggleTheme, isDarkTheme, theme } = useThemeContext();
     const [anchorEl, setAnchorEl] = useState(null);
-    const { logout, getLoginStatus, userInfo, getUserInfo } = useContext(AuthContext);
+    const { logout, getLoginStatus, userInfo } = useContext(AuthContext);
 
     const handleProfileMenuOpen = async (event) => {
-        if (localStorage.getItem('nickname') && localStorage.getItem('email')) {
-            const result = await getUserInfo();
-            localStorage.setItem('nickname', result.firstName);
-            localStorage.setItem('email', result.email);
-        }
         setAnchorEl(event.currentTarget);
     };
 
