@@ -169,11 +169,11 @@ const Navbar = () => {
                             <MenuItem onClick={handleProfileMenuClose}>
                                 <Box display="flex" alignItems="center" gap={2}>
                                     <Avatar sx={{ bgcolor: theme.primary.main }}>
-                                        {localStorage.getItem('nickname')?.charAt(0).toUpperCase() || userInfo?.nickname?.charAt(0).toUpperCase() || 'U'}
+                                        {(userInfo?.nickname || localStorage.getItem('nickname') || 'U').charAt(0)}
                                     </Avatar>
                                     <Box>
                                         <Typography fontWeight="bold">
-                                            {localStorage.getItem('nickname') || userInfo?.nickname || 'Пользователь'}
+                                            {userInfo?.nickname || localStorage.getItem('nickname') || 'Пользователь'}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
                                             {localStorage.getItem('email') || userInfo?.email || ''}
