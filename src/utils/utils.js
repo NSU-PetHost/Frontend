@@ -17,3 +17,9 @@ export const generateNickname = () => {
 
     return nickname;
 }
+
+export const correctYearWord = (count) => {
+    if (count % 10 === 1) return "год";
+    if (count % 10 > 1 || count % 10 < 5) return "года";
+    return "лет";
+}

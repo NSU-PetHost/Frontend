@@ -4,11 +4,11 @@ import {
     IconButton,
     InputAdornment,
     Typography,
-    TextField, Alert
+    TextField, Alert, LinearProgress
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import React, {useContext, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import {useThemeContext} from "../contexts/ThemeContext.jsx";
 import {AuthContext} from "../contexts/AuthContext";
 import {SuccessMessage} from "./SuccessMessage";
@@ -20,6 +20,7 @@ export const RegisterForm = () => {
     const [isShowPasswordConfirm, setIsShowPasswordConfirm] = useState(false);
     const { theme } = useThemeContext();
     const navigate = useNavigate();
+    const [passwordStrength, setPasswordStrength] = useState(0);
     const { register, loading, error, clearError, confirmEmail, confirmCode, setLoginStatus, setUserData } = useContext(AuthContext);
     const [formData, setFormData] = useState({
         name: '',
@@ -34,6 +35,31 @@ export const RegisterForm = () => {
     const [codeMode, setCodeMode] = useState(false);
     const [success, setSuccess] = useState(null);
     const [confirmationCode, setConfirmationCode] = useState(null)
+
+    useEffect(() => {
+        if (formData.password) {
+            let strength = 0;
+
+            if (formData.password.length >= 8) strength += 1;
+            if (formData.password.length >= 12) strength += 1;
+
+            if (/\d/.test(formData.password)) strength += 1;
+
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) strength += 1;
+
+            if (/[a-z]/.test(formData.password) && /[A-Z]/.test(formData.password)) strength += 1;
+
+            setPasswordStrength(Math.min(strength, 5));
+        } else {
+            setPasswordStrength(0);
+        }
+    }, [formData.password]);
+
+    const getPasswordStrengthColor = () => {
+        if (passwordStrength <= 2) return 'error';
+        if (passwordStrength === 3) return 'warning';
+        return 'success';
+    };
 
     const clearMessages = () => {
         setErrorLocal(null);
@@ -95,6 +121,7 @@ export const RegisterForm = () => {
             console.error('Confirmation failed:', err);
             setErrorLocal('Не удалось подтвердить почтовый ящик. Попробуйте снова');
         } finally {
+            setCodeMode(true);
             setConfirmationCode(null);
         }
     };
@@ -272,7 +299,6 @@ export const RegisterForm = () => {
                             },
                         }}
                     />
-
                     <TextField
                         fullWidth
                         variant="outlined"
@@ -306,6 +332,17 @@ export const RegisterForm = () => {
                             },
                         }}
                     />
+                    {formData.password && <Box sx={{ width: '100%' }}>
+                        <LinearProgress
+                            variant="determinate"
+                            value={passwordStrength * 25}
+                            color={getPasswordStrengthColor()}
+                            sx={{ height: 8, borderRadius: 4 }}
+                        />
+                        <Typography variant="caption" color={theme.text.secondary}>
+                            Сложность пароля: {passwordStrength <= 2 ? 'Слабый' : passwordStrength === 3 ? 'Средний' : 'Сильный'}
+                        </Typography>
+                    </Box>}
                     <TextField
                         fullWidth
                         variant="outlined"

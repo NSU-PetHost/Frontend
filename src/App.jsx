@@ -13,6 +13,7 @@ import ForgotPassword from './components/ForgotPassword';
 import AnimalsList from "./components/AnimalsList";
 import pet from './assets/pet.png';
 import ChangePassword from "./components/ChangePassword";
+import ArticlePage from "./components/ArticlePage";
 
 const App = () => {
     return (
@@ -25,6 +26,7 @@ const App = () => {
                         <Route path="/auth" element={<Auth />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/change-password" element={<ChangePassword />} />
+                        <Route path="/articles/:id" element={<ArticlePage />} />
                         <Route path="/protect" element={<Articles />} />
                         <Route path="/animals" element={<AnimalsList
                             animals={[

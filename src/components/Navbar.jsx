@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useState} from 'react';
 import {Link, useNavigate} from 'react-router-dom';
 import { useThemeContext } from '../contexts/ThemeContext.jsx';
 import LightModeIcon from "@mui/icons-material/LightMode";
@@ -31,11 +31,13 @@ const Logo = styled.h1`
 const NavItems = styled.div`
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-
+    gap: 1rem;
+    @media (max-width: 968px) {
+        font-size: 0.8rem;
+        gap: 0.5rem;
+    }
     @media (max-width: 768px) {
         flex-direction: column;
-        gap: 0.5rem;
     }
 `;
 
@@ -148,7 +150,7 @@ const Navbar = () => {
                     PaperProps={{
                         elevation: 4,
                         sx: {
-                            width: 280,
+                            width: 360,
                             borderRadius: '12px',
                             padding: '8px 0',
                             mt: 1,

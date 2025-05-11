@@ -13,6 +13,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import PetsIcon from '@mui/icons-material/Pets';
 import {useThemeContext} from "../contexts/ThemeContext.jsx";
+import {correctYearWord} from "../utils/utils";
 
 const AnimalsList = ({ animals, onEdit, isLoading = false }) => {
     const { theme } = useThemeContext();
@@ -118,7 +119,7 @@ const AnimalsList = ({ animals, onEdit, isLoading = false }) => {
 
                                     {animal.age && (
                                         <Typography variant="body2" color={theme.text.secondary}>
-                                            Возраст: {animal.age} years
+                                            Возраст: {animal.age} {correctYearWord(animal.age)}
                                         </Typography>
                                     )}
                                 </CardContent>
@@ -131,7 +132,7 @@ const AnimalsList = ({ animals, onEdit, isLoading = false }) => {
                                         size="small"
                                         sx={{ borderRadius: 50 }}
                                     >
-                                        Edit
+                                        Редактировать
                                     </Button>
                                 </Box>
                             </Card>
