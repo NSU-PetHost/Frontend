@@ -2,7 +2,7 @@ import {Button, Typography, Box, Container, Stack, CardMedia, Card, CardContent}
 import { useNavigate } from 'react-router-dom';
 import { keyframes } from '@emotion/react';
 import PetsIcon from '@mui/icons-material/Pets';
-import { articles } from './articles';
+import { articles } from './Articles';
 import {useThemeContext} from "../contexts/ThemeContext";
 import React from "react";
 
