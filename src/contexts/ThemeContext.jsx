@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useMemo, useState} from 'react';
+import React, {createContext, useContext, useEffect, useMemo, useState} from 'react';
 import { createGlobalStyle, ThemeProvider as StyledThemeProvider } from 'styled-components';
 import {createTheme, ThemeProvider as MuiThemeProvider} from "@mui/material";
 
@@ -20,8 +20,8 @@ const themes = {
         },
         secondary: {
             main: '#0973b5',
-            light: '#67a6da',
-            dark: '#156291',
+            light: '#abceec',
+            dark: '#246b97',
             contrastText: '#FFFFFF'
         },
         background: {
@@ -61,7 +61,7 @@ const themes = {
         secondary: {
             main: '#0973b5',
             light: '#156291',
-            dark: '#67a6da',
+            dark: '#97c2e6',
             contrastText: '#FFFFFF'
         },
         background: {
@@ -104,12 +104,20 @@ const GlobalStyle = createGlobalStyle`
 
 export const ThemeContext = createContext();
 
-
 export const ThemeProviderWrapper = ({ children }) => {
     const [theme, setTheme] = useState(themes.light);
     const [font, setFont] = useState(fonts[0].value);
 
+    useEffect(() => {
+        const cacheTheme = localStorage.getItem('theme');
+        setTheme(cacheTheme === 'light' ? themes.dark : themes.light);
+        const cacheFont = localStorage.getItem('fontFamily');
+        console.log('cacheTheme', cacheFont);
+        setFont(cacheFont || '"Golos Text", sans-serif');
+    }, []);
+
     const toggleTheme = () => {
+        localStorage.setItem('theme', getThemeName());
         setTheme(prevTheme => (prevTheme === themes.light ? themes.dark : themes.light));
     };
 

@@ -18,7 +18,7 @@ const Auth = () => {
         }
     }, [searchParams])
     return (
-        <Container maxWidth="md" sx={{ py: 4 }}>
+        <Container maxWidth="md" sx={{ py: 8 }}>
             <Paper elevation={3} sx={{p: 4, overflow: 'hidden', borderRadius: 4, bgcolor: theme.background.paper}}>
                 {isLogin ? (
                     <>

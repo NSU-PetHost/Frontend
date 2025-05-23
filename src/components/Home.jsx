@@ -2,7 +2,7 @@ import {Button, Typography, Box, Container, Stack, CardMedia, Card, CardContent}
 import { useNavigate } from 'react-router-dom';
 import { keyframes } from '@emotion/react';
 import PetsIcon from '@mui/icons-material/Pets';
-import { articles } from './Articles';
+import {articlesData} from "./articlesData";
 import {useThemeContext} from "../contexts/ThemeContext";
 import React from "react";
 
@@ -30,8 +30,7 @@ const Home = () => {
             color: 'white',
             pt: 10,
             pb: 12,
-            borderRadius: 2,
-            mt: 2
+            borderRadius: 2
         }}>
             <Container maxWidth="lg">
                 <Stack spacing={6} alignItems="center">
@@ -57,7 +56,7 @@ const Home = () => {
                         <Button
                             variant="outlined"
                             size="large"
-                            onClick={() => navigate('/articles')}
+                            onClick={() => navigate('/articles/all')}
                             sx={{
                                 px: 7,
                                 py: 2,
@@ -103,7 +102,7 @@ const Home = () => {
                             Популярные статьи
                         </Typography>
                         <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-                            {articles.slice(0, 3).map(article => (
+                            {articlesData.slice(0, 3).map(article => (
                                 <Card
                                     key={article.id}
                                     onClick={() => navigate(`/articles/${article.id}`)}

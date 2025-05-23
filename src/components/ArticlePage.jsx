@@ -21,12 +21,12 @@ import {
 } from '@mui/icons-material';
 import { Link, useParams } from 'react-router-dom';
 import { useThemeContext } from '../contexts/ThemeContext.jsx';
-import { articles } from './Articles';
+import {articlesData} from "./articlesData";
 
 const ArticlePage = () => {
     const { theme } = useThemeContext();
     const { id } = useParams();
-    const article = articles.find(article => article.id === parseInt(id));
+    const article = articlesData.find(article => article.id === parseInt(id));
 
     if (!article) {
         return (
@@ -37,12 +37,12 @@ const ArticlePage = () => {
     }
 
     return (
-        <Box sx={{ minHeight: '100vh', py: 6 }}>
+        <Box sx={{ minHeight: '100vh', py: 8 }}>
             <Container maxWidth="md">
                 <Button
                     startIcon={<ArrowBack />}
                     component={Link}
-                    to="/articles"
+                    to="/articles/all"
                     sx={{ mb: 4 }}
                 >
                     Назад к статьям
@@ -128,7 +128,7 @@ const ArticlePage = () => {
                     <Button
                         startIcon={<ArrowBack />}
                         component={Link}
-                        to="/articles"
+                        to="/articles/all"
                         size="large"
                     >
                         Все статьи

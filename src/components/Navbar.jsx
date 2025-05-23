@@ -94,9 +94,9 @@ const Navbar = () => {
             <Logo>PetHost</Logo>
             <NavItems>
                 <NavbarLink to="/">ГЛАВНАЯ</NavbarLink>
-                <NavbarLink to="/animals">ВАШИ ПИТОМЦЫ</NavbarLink>
+                <NavbarLink to="/pets">ВАШИ ПИТОМЦЫ</NavbarLink>
                 <NavbarLink to="/articles">ИНТЕРЕСНЫЕ СТАТЬИ</NavbarLink>
-                <NavbarLink to="/submit-post">ДОБАВИТЬ ПИТОМЦА</NavbarLink>
+                <NavbarLink to="/add-animal">ДОБАВИТЬ ПИТОМЦА</NavbarLink>
                 <NavbarLink to="/settings">НАСТРОЙКИ</NavbarLink>
             </NavItems>
             <Box display="flex" sx={{ flexDirection: { xs: "column", md: "row" } }} gap={2} alignItems="center">

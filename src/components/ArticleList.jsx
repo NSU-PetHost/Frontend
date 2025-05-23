@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Container,
@@ -12,14 +12,15 @@ import {
     keyframes,
     Snackbar,
     Alert,
-    IconButton
+    IconButton,
+    Pagination
 } from '@mui/material';
 import {
     Article as ArticleIcon,
     Favorite,
     Share,
     Bookmark,
-    ArrowForward
+    ArrowBack
 } from '@mui/icons-material';
 import { useThemeContext } from "../contexts/ThemeContext.jsx";
 import { useNavigate } from "react-router-dom";
@@ -60,7 +61,7 @@ const GradientButton = styled(Button)({
     }
 });
 
-const Articles = () => {
+const ArticlesList = () => {
     const { theme } = useThemeContext();
     const navigate = useNavigate();
 
@@ -69,7 +70,14 @@ const Articles = () => {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-    const [shareUrl, setShareUrl] = useState('');
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const articlesPerPage = 9;
+    const totalPages = Math.ceil(articlesData.length / articlesPerPage);
+
+    const indexOfLastArticle = currentPage * articlesPerPage;
+    const indexOfFirstArticle = indexOfLastArticle - articlesPerPage;
+    const currentArticles = articlesData.slice(indexOfFirstArticle, indexOfLastArticle);
 
     useEffect(() => {
         const savedFavorites = localStorage.getItem('articleFavorites');
@@ -104,27 +112,25 @@ const Articles = () => {
         }
     };
 
-    const handleShareClick = (articleId) => {
+    const handleShareClick = async (articleId) => {
         const url = `${window.location.origin}/articles/${articleId}`;
-        setShareUrl(url);
+        const article = articlesData.find(a => a.id === articleId);
 
-        if (navigator.share) {
-            navigator.share({
-                title: articlesData.find(a => a.id === articleId)?.title,
-                text: articlesData.find(a => a.id === articleId)?.excerpt,
-                url: shareUrl
-            }).catch(() => {
-                copyToClipboard(shareUrl);
-            });
-        } else {
-            copyToClipboard(shareUrl);
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: article.title,
+                    text: article.excerpt,
+                    url: url
+                });
+            } else {
+                await navigator.clipboard.writeText(url);
+                showSnackbar('Ссылка скопирована в буфер обмена', 'success');
+            }
+        } catch (err) {
+            console.error('Ошибка при попытке поделиться:', err);
+            showSnackbar('Не удалось поделиться статьей', 'error');
         }
-    };
-
-    const copyToClipboard = (text) => {
-        navigator.clipboard.writeText(text).then(() => {
-            showSnackbar('Ссылка скопирована в буфер обмена', 'success');
-        });
     };
 
     const showSnackbar = (message, severity) => {
@@ -137,41 +143,44 @@ const Articles = () => {
         setSnackbarOpen(false);
     };
 
-    const handleViewAllArticles = () => {
-        navigate('/articles/all');
+    const handlePageChange = (event, value) => {
+        setCurrentPage(value);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleBackClick = () => {
+        navigate(-1);
     };
 
     return (
         <Box sx={{ minHeight: '100vh', py: 8 }}>
             <Container maxWidth="xl" sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
-                <Box mb={8} ml={8} sx={{ px: { xs: 2, sm: 4 } }}>
+                <Box mb={8} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Button
+                        startIcon={<ArrowBack />}
+                        onClick={handleBackClick}
+                        sx={{ color: theme.primary.main }}
+                    >
+                        Назад
+                    </Button>
                     <Typography
                         variant="h2"
                         component="h1"
-                        gutterBottom
                         sx={{
                             fontWeight: 800,
                             background: `linear-gradient(45deg, ${theme.primary.main} 0%, ${theme.secondary.main} 80%)`,
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
-                            mb: 2,
                             fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
                         }}
                     >
-                        Интересные статьи
+                        Все статьи
                     </Typography>
-                    <Typography
-                        variant="subtitle1"
-                        color={theme.text.secondary}
-                        mx="auto"
-                        sx={{ fontSize: { xs: '1rem', sm: '1.1rem' } }}
-                    >
-                        Откройте для себя последние советы и рекомендации по уходу, дрессировке, питанию и многому другому от наших экспертов.
-                    </Typography>
+                    <Box sx={{ width: 100 }} />
                 </Box>
 
                 <Grid container spacing={4} justifyContent="center">
-                    {articlesData.slice(0, 6).map((article) => (
+                    {currentArticles.map((article) => (
                         <Grid
                             item
                             xs={12}
@@ -247,33 +256,30 @@ const Articles = () => {
                                     </Typography>
                                     <Box>
                                         <IconButton
-                                            size="small"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleFavoriteClick(article.id);
                                             }}
                                             color={favorites.includes(article.id) ? "error" : "default"}
                                         >
-                                            <Favorite fontSize="small" />
+                                            <Favorite />
                                         </IconButton>
                                         <IconButton
-                                            size="small"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleBookmarkClick(article.id);
                                             }}
                                             color={bookmarks.includes(article.id) ? "primary" : "default"}
                                         >
-                                            <Bookmark fontSize="small" />
+                                            <Bookmark />
                                         </IconButton>
                                         <IconButton
-                                            size="small"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleShareClick(article.id);
                                             }}
                                         >
-                                            <Share fontSize="small" />
+                                            <Share />
                                         </IconButton>
                                     </Box>
                                 </Box>
@@ -282,14 +288,23 @@ const Articles = () => {
                     ))}
                 </Grid>
 
-                <Box textAlign="center" mt={8} mb={4}>
-                    <GradientButton
-                        endIcon={<ArrowForward sx={{ ml: 0.5}} />}
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 4 }}>
+                    <Pagination
+                        count={totalPages}
+                        page={currentPage}
+                        onChange={handlePageChange}
+                        color="primary"
                         size="large"
-                        onClick={handleViewAllArticles}
-                    >
-                        Все статьи
-                    </GradientButton>
+                        sx={{
+                            '& .MuiPaginationItem-root': {
+                                color: theme.text.primary,
+                                '&.Mui-selected': {
+                                    backgroundColor: theme.primary.main,
+                                    color: theme.primary.contrastText
+                                }
+                            }
+                        }}
+                    />
                 </Box>
             </Container>
 
@@ -311,4 +326,4 @@ const Articles = () => {
     );
 };
 
-export default Articles;
+export default ArticlesList;

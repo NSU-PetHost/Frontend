@@ -25,12 +25,13 @@ const Settings = () => {
 
     const handleFontChange = (event, newFont) => {
         if (newFont !== null) {
+            localStorage.setItem('fontFamily', newFont);
             setFont(newFont);
         }
     };
 
     return (
-        <Container maxWidth="md" sx={{ py: 4}}>
+        <Container maxWidth="md" sx={{ py: 8}}>
             <Paper elevation={3} sx={{ p: 4, borderRadius: 4, bgcolor: theme.background.paper }}>
                 <Typography
                     variant="h2"
