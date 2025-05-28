@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
     Box,
     Typography,
@@ -8,100 +8,82 @@ import {
     TextField,
     IconButton,
     Chip,
-    Avatar,
-    MenuItem,
-    Select,
-    InputLabel,
-    FormControl,
     Grid,
     Paper,
-    List
+    Snackbar,
+    Alert,
+    CircularProgress,
+    Tabs,
+    Tab
 } from '@mui/material';
-import { Save, Close, Delete, Image, InsertDriveFile } from '@mui/icons-material';
+import MarkdownEditor from "./MarkdownEditor";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
+import 'highlight.js/styles/github.css';
+import { Save, Close, Image as ImageIcon, Visibility, Edit } from '@mui/icons-material';
 import { useThemeContext } from "../contexts/ThemeContext";
+import { useNavigate } from "react-router-dom";
+import { ArticleContext } from "../contexts/ArticleProvider";
 
 const ArticleEditor = () => {
+    const {
+        loading,
+        clearError,
+        createArticle,
+    } = useContext(ArticleContext);
+
     const [articleData, setArticleData] = useState({
         title: '',
         content: '',
-        category: '',
-        images: [],
-        documents: []
+        image: null,
     });
 
-    const [previewImages, setPreviewImages] = useState([]);
-    const [previewDocuments, setPreviewDocuments] = useState([]);
+    const [previewImage, setPreviewImage] = useState(null);
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
+    const [tabValue, setTabValue] = useState('edit');
     const fileInputRef = useRef(null);
-    const docInputRef = useRef(null);
     const { theme } = useThemeContext();
+    const navigate = useNavigate();
 
-    const categories = [
-        'Новости',
-        'Обучающие материалы',
-        'Обзоры',
-        'Исследования'
-    ];
+    const handleTabChange = (event, newValue) => {
+        setTabValue(newValue);
+    };
 
     const handleInputChange = (field, value) => {
         setArticleData({ ...articleData, [field]: value });
     };
 
+    const handleSaveContent = (markdownContent) => {
+        setArticleData({ ...articleData, content: markdownContent });
+    };
+
     const handleImageUpload = (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length === 0) return;
+        const file = e.target.files[0];
+        if (!file) return;
 
-        const newImages = files.map(file => ({
-            file,
-            preview: URL.createObjectURL(file),
-            name: file.name,
-            type: 'image'
-        }));
+        // Создаем превью изображения
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setPreviewImage(reader.result);
+        };
+        reader.readAsDataURL(file);
 
-        setPreviewImages([...previewImages, ...newImages]);
         setArticleData({
             ...articleData,
-            images: [...articleData.images, ...files]
+            image: file
         });
     };
 
-    const handleDocumentUpload = (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length === 0) return;
-
-        const newDocs = files.map(file => ({
-            file,
-            name: file.name,
-            type: file.type.includes('image') ? 'image' : 'document',
-            size: (file.size / 1024).toFixed(1) + ' KB'
-        }));
-
-        setPreviewDocuments([...previewDocuments, ...newDocs]);
+    const removeImage = () => {
+        setPreviewImage(null);
         setArticleData({
             ...articleData,
-            documents: [...articleData.documents, ...files]
-        });
-    };
-
-    const removeImage = (index) => {
-        const newImages = [...previewImages];
-        URL.revokeObjectURL(newImages[index].preview);
-        newImages.splice(index, 1);
-
-        setPreviewImages(newImages);
-        setArticleData({
-            ...articleData,
-            images: articleData.images.filter((_, i) => i !== index)
-        });
-    };
-
-    const removeDocument = (index) => {
-        const newDocs = [...previewDocuments];
-        newDocs.splice(index, 1);
-
-        setPreviewDocuments(newDocs);
-        setArticleData({
-            ...articleData,
-            documents: articleData.documents.filter((_, i) => i !== index)
+            image: null
         });
     };
 
@@ -109,19 +91,39 @@ const ArticleEditor = () => {
         fileInputRef.current.click();
     };
 
-    const triggerDocInput = () => {
-        docInputRef.current.click();
+    const showSnackbar = (message, severity) => {
+        setSnackbar({
+            open: true,
+            message,
+            severity
+        });
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // Здесь будет логика отправки данных на сервер
-        console.log('Статья отправлена:', articleData);
+    const handleCloseSnackbar = () => {
+        setSnackbar(prev => ({ ...prev, open: false }));
+        clearError();
+    };
 
-        // Очистка превью после отправки
-        previewImages.forEach(img => URL.revokeObjectURL(img.preview));
-        setPreviewImages([]);
-        setPreviewDocuments([]);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (!articleData.image) {
+            showSnackbar('Пожалуйста, загрузите изображение', 'error');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('title', articleData.title);
+            formData.append('text', articleData.content);
+            formData.append('image', articleData.image);
+
+            const result = await createArticle(formData);
+            showSnackbar('Статья успешно создана', 'success');
+            navigate(`/articles/${result.id}`);
+        } catch (error) {
+            showSnackbar(error.message, 'error');
+        }
     };
 
     return (
@@ -144,9 +146,9 @@ const ArticleEditor = () => {
                 </Typography>
 
                 <form onSubmit={handleSubmit}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} md={8}>
-                            <Card sx={{ borderRadius: 3, boxShadow: 2, mb: 3, width: '48vw' }}>
+                    <Box display="flex" flexDirection="row" gap={2}>
+                        <Box flex={2}>
+                            <Card sx={{ borderRadius: 3, boxShadow: 2, mb: 3 }}>
                                 <CardContent>
                                     <TextField
                                         label="Заголовок статьи"
@@ -157,148 +159,105 @@ const ArticleEditor = () => {
                                         sx={{ mb: 3 }}
                                     />
 
-                                    <TextField
-                                        label="Текст статьи"
-                                        value={articleData.content}
-                                        onChange={(e) => handleInputChange('content', e.target.value)}
-                                        multiline
-                                        rows={12}
-                                        fullWidth
-                                        required
-                                    />
+                                    <Tabs value={tabValue} onChange={handleTabChange} sx={{ mb: 2 }}>
+                                        <Tab label="Редактировать" value="edit" icon={<Edit />} />
+                                        <Tab label="Предпросмотр" value="preview" icon={<Visibility />} />
+                                    </Tabs>
+
+                                    {tabValue === 'edit' ? (
+                                        <MarkdownEditor
+                                            initialContent={articleData.content}
+                                            onSave={handleSaveContent}
+                                            isLoading={loading}
+                                        />
+                                    ) : (
+                                        <Card sx={{ p: 2, border: `1px solid ${theme.divider}`, borderRadius: 1 }}>
+                                            <ReactMarkdown
+                                                rehypePlugins={[rehypeHighlight]}
+                                                remarkPlugins={[remarkGfm]}
+                                                components={{
+                                                    img: ({ node, ...props }) => (
+                                                        <img style={{ maxWidth: '100%' }} {...props} />
+                                                    ),
+                                                    code({ node, inline, className, children, ...props }) {
+                                                        const match = /language-(\w+)/.exec(className || '');
+                                                        return !inline && match ? (
+                                                            <div className="code-block">
+                                                                <div className="language-tag">{match[1]}</div>
+                                                                <code className={className} {...props}>
+                                                                    {children}
+                                                                </code>
+                                                            </div>
+                                                        ) : (
+                                                            <code className={className} {...props}>
+                                                                {children}
+                                                            </code>
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                {articleData.content}
+                                            </ReactMarkdown>
+                                        </Card>
+                                    )}
                                 </CardContent>
                             </Card>
+                        </Box>
 
-                            {previewImages.length > 0 && (
-                                <Card sx={{ borderRadius: 3, boxShadow: 2, mb: 3 }}>
-                                    <CardContent>
-                                        <Typography variant="h6" sx={{ mb: 2 }}>
-                                            Загруженные изображения
-                                        </Typography>
-                                        <Grid container spacing={2}>
-                                            {previewImages.map((img, index) => (
-                                                <Grid item xs={6} sm={4} key={index}>
-                                                    <Paper elevation={2} sx={{ p: 1, position: 'relative' }}>
-                                                        <img
-                                                            src={img.preview}
-                                                            alt={img.name}
-                                                            style={{
-                                                                width: '100%',
-                                                                height: '120px',
-                                                                objectFit: 'cover',
-                                                                borderRadius: '8px'
-                                                            }}
-                                                        />
-                                                        <IconButton
-                                                            size="small"
-                                                            sx={{
-                                                                position: 'absolute',
-                                                                top: 4,
-                                                                right: 4,
-                                                                bgcolor: 'background.paper'
-                                                            }}
-                                                            onClick={() => removeImage(index)}
-                                                        >
-                                                            <Close fontSize="small" />
-                                                        </IconButton>
-                                                        <Typography variant="caption" noWrap sx={{ display: 'block', mt: 1 }}>
-                                                            {img.name}
-                                                        </Typography>
-                                                    </Paper>
-                                                </Grid>
-                                            ))}
-                                        </Grid>
-                                    </CardContent>
-                                </Card>
-                            )}
-
-                            {previewDocuments.length > 0 && (
-                                <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-                                    <CardContent>
-                                        <Typography variant="h6" sx={{ mb: 2 }}>
-                                            Загруженные документы
-                                        </Typography>
-                                        <List dense>
-                                            {previewDocuments.map((doc, index) => (
-                                                <Paper key={index} elevation={2} sx={{ p: 1, mb: 1 }}>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                        <Avatar sx={{ bgcolor: theme.secondary.light, mr: 2 }}>
-                                                            {doc.type === 'image' ? (
-                                                                <Image color="primary" />
-                                                            ) : (
-                                                                <InsertDriveFile color="primary" />
-                                                            )}
-                                                        </Avatar>
-                                                        <Box sx={{ flexGrow: 1 }}>
-                                                            <Typography variant="body2">{doc.name}</Typography>
-                                                            <Typography variant="caption">{doc.size}</Typography>
-                                                        </Box>
-                                                        <IconButton onClick={() => removeDocument(index)}>
-                                                            <Delete fontSize="small" />
-                                                        </IconButton>
-                                                    </Box>
-                                                </Paper>
-                                            ))}
-                                        </List>
-                                    </CardContent>
-                                </Card>
-                            )}
-                        </Grid>
-
-                        <Grid item xs={12} md={4}>
-                            <Card sx={{ borderRadius: 3, boxShadow: 2, mb: 3, width: '48vw'  }}>
+                        <Box flex={1}>
+                            <Card sx={{ borderRadius: 3, boxShadow: 2, mb: 3 }}>
                                 <CardContent>
-                                    <FormControl fullWidth sx={{ mb: 3 }}>
-                                        <InputLabel>Категория</InputLabel>
-                                        <Select
-                                            value={articleData.category}
-                                            label="Категория"
-                                            onChange={(e) => handleInputChange('category', e.target.value)}
-                                            required
-                                        >
-                                            {categories.map((cat) => (
-                                                <MenuItem key={cat} value={cat}>{cat}</MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-
                                     <input
                                         type="file"
                                         ref={fileInputRef}
                                         onChange={handleImageUpload}
                                         accept="image/*"
-                                        multiple
                                         style={{ display: 'none' }}
                                     />
                                     <Button
                                         variant="outlined"
-                                        startIcon={<Image />}
+                                        startIcon={<ImageIcon />}
                                         fullWidth
                                         sx={{ mb: 2 }}
                                         onClick={triggerFileInput}
+                                        disabled={loading}
                                     >
-                                        Добавить изображения
+                                        Добавить изображение
                                     </Button>
 
-                                    <input
-                                        type="file"
-                                        ref={docInputRef}
-                                        onChange={handleDocumentUpload}
-                                        accept=".pdf,.doc,.docx,.txt,.rtf"
-                                        multiple
-                                        style={{ display: 'none' }}
-                                    />
-                                    <Button
-                                        variant="outlined"
-                                        startIcon={<InsertDriveFile />}
-                                        fullWidth
-                                        sx={{ mb: 3 }}
-                                        onClick={triggerDocInput}
-                                    >
-                                        Добавить документы
-                                    </Button>
+                                    {previewImage && (
+                                        <Box sx={{ mb: 2 }}>
+                                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                                Загруженное изображение:
+                                            </Typography>
+                                            <Paper elevation={2} sx={{ p: 1, position: 'relative' }}>
+                                                <img
+                                                    src={previewImage}
+                                                    alt="Превью"
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '200px',
+                                                        objectFit: 'cover',
+                                                        borderRadius: '8px'
+                                                    }}
+                                                />
+                                                <IconButton
+                                                    size="small"
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: 4,
+                                                        right: 4,
+                                                        bgcolor: 'background.paper'
+                                                    }}
+                                                    onClick={removeImage}
+                                                >
+                                                    <Close fontSize="small" />
+                                                </IconButton>
+                                            </Paper>
+                                        </Box>
+                                    )}
 
-                                    <Box sx={{ display: 'flex', gap: 2 }}>
+                                    <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                                         <Button
                                             variant="contained"
                                             color="secondary"
@@ -307,13 +266,11 @@ const ArticleEditor = () => {
                                                 setArticleData({
                                                     title: '',
                                                     content: '',
-                                                    category: '',
-                                                    images: [],
-                                                    documents: []
+                                                    image: null
                                                 });
-                                                setPreviewImages([]);
-                                                setPreviewDocuments([]);
+                                                setPreviewImage(null);
                                             }}
+                                            disabled={loading}
                                         >
                                             Очистить
                                         </Button>
@@ -321,8 +278,8 @@ const ArticleEditor = () => {
                                             type="submit"
                                             variant="contained"
                                             fullWidth
-                                            startIcon={<Save />}
-                                            disabled={!articleData.title || !articleData.content || !articleData.category}
+                                            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Save />}
+                                            disabled={!articleData.title || !articleData.content || !articleData.image || loading}
                                         >
                                             Опубликовать
                                         </Button>
@@ -330,19 +287,18 @@ const ArticleEditor = () => {
                                 </CardContent>
                             </Card>
 
-                            {/* Информация о загрузках */}
                             <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
                                 <CardContent>
                                     <Typography variant="h6" sx={{ mb: 2 }}>
                                         Информация
                                     </Typography>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                        <Typography variant="body2">Изображений:</Typography>
-                                        <Chip label={previewImages.length} size="small" />
-                                    </Box>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                        <Typography variant="body2">Документов:</Typography>
-                                        <Chip label={previewDocuments.length} size="small" />
+                                        <Typography variant="body2">Изображение:</Typography>
+                                        <Chip
+                                            label={previewImage ? "Загружено" : "Отсутствует"}
+                                            size="small"
+                                            color={previewImage ? "success" : "default"}
+                                        />
                                     </Box>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <Typography variant="body2">Статус:</Typography>
@@ -354,10 +310,25 @@ const ArticleEditor = () => {
                                     </Box>
                                 </CardContent>
                             </Card>
-                        </Grid>
-                    </Grid>
+                        </Box>
+                    </Box>
                 </form>
             </Box>
+
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={6000}
+                onClose={handleCloseSnackbar}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={handleCloseSnackbar}
+                    severity={snackbar.severity}
+                    sx={{ width: '100%' }}
+                >
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </Box>
     );
 };

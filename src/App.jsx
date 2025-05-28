@@ -18,48 +18,51 @@ import ScrollToTopSimpleBar from "./utils/ScrollToTopSimpleBar";
 import ArticleList from "./components/ArticleList";
 import Articles from "./components/Articles";
 import ArticleEditor from "./components/ArticleEditor";
+import {ArticleProvider} from "./contexts/ArticleProvider";
 
 const App = () => {
     return (
         <ThemeProviderWrapper>
             <AuthProvider>
-                <Router>
-                    <Box sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        height: '100vh',
-                    }}>
-                        <Box position="fixed" width="100%" zIndex={1000}>
-                            <Navbar />
-                        </Box>
-
-                        <ScrollToTopSimpleBar>
-                            <Box
-                                component="main"
-                                sx={{
-                                    flex: 1,
-                                    px: 2
-                                }}
-                            >
-                                <Routes>
-                                    <Route path="/" element={<Home />} />
-                                    <Route path="/auth" element={<Auth />} />
-                                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                                    <Route path="/change-password" element={<ChangePassword />} />
-                                    <Route path="/articles/:id" element={<ArticlePage />} />
-                                    <Route path="/pet/:id" element={<PetProfile />} />
-                                    <Route path="/protect" element={<Articles />} />
-                                    <Route path="/pets" element={<AnimalsList/>} />
-                                    <Route path="/add-animal" element={<AnimalForm />} />
-                                    <Route path="/articles" element={<Articles />} />
-                                    <Route path="/articles/all" element={<ArticleList />} />
-                                    <Route path="/submit-post" element={<ArticleEditor />} />
-                                    <Route path="/settings" element={<Settings />} />
-                                </Routes>
+                <ArticleProvider>
+                    <Router>
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            height: '100vh',
+                        }}>
+                            <Box position="fixed" width="100%" zIndex={1000}>
+                                <Navbar />
                             </Box>
-                        </ScrollToTopSimpleBar>
-                    </Box>
-                </Router>
+
+                            <ScrollToTopSimpleBar>
+                                <Box
+                                    component="main"
+                                    sx={{
+                                        flex: 1,
+                                        px: 2
+                                    }}
+                                >
+                                    <Routes>
+                                        <Route path="/" element={<Home />} />
+                                        <Route path="/auth" element={<Auth />} />
+                                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                                        <Route path="/change-password" element={<ChangePassword />} />
+                                        <Route path="/articles/:id" element={<ArticlePage />} />
+                                        <Route path="/pet/:id" element={<PetProfile />} />
+                                        <Route path="/protect" element={<Articles />} />
+                                        <Route path="/pets" element={<AnimalsList/>} />
+                                        <Route path="/add-animal" element={<AnimalForm />} />
+                                        <Route path="/articles" element={<Articles />} />
+                                        <Route path="/articles/all" element={<ArticleList />} />
+                                        <Route path="/submit-post" element={<ArticleEditor />} />
+                                        <Route path="/settings" element={<Settings />} />
+                                    </Routes>
+                                </Box>
+                            </ScrollToTopSimpleBar>
+                        </Box>
+                    </Router>
+                </ArticleProvider>
             </AuthProvider>
         </ThemeProviderWrapper>
     );

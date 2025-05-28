@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
     Box,
     Container,
@@ -8,12 +8,11 @@ import {
     CardContent,
     CardMedia,
     Button,
-    styled,
-    keyframes,
     Snackbar,
     Alert,
     IconButton,
-    Pagination
+    Pagination,
+    CircularProgress
 } from '@mui/material';
 import {
     Article as ArticleIcon,
@@ -22,9 +21,11 @@ import {
     Bookmark,
     ArrowBack
 } from '@mui/icons-material';
-import { useThemeContext } from "../contexts/ThemeContext.jsx";
+import { useThemeContext } from "../contexts/ThemeContext";
 import { useNavigate } from "react-router-dom";
-import {articlesData} from "./articlesData";
+import { ArticleContext } from "../contexts/ArticleProvider";
+import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
 
 const floatAnimation = keyframes`
     0% { transform: translateY(0); }
@@ -45,39 +46,24 @@ const AnimatedCard = styled(Card)({
     }
 });
 
-const GradientButton = styled(Button)({
-    background: `linear-gradient(45deg, ${({ theme }) => theme.primary.main} 0%, ${({ theme }) => theme.secondary.main} 100%)`,
-    color: `${({ theme }) => theme.primary.contrastText}`,
-    borderRadius: '50px',
-    padding: '12px 32px',
-    fontWeight: 'bold',
-    fontSize: '1rem',
-    boxShadow: 'none',
-    transition: 'all 0.3s ease',
-    '&:hover': {
-        transform: 'translateY(-3px)',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-        background: `linear-gradient(45deg, ${({ theme }) => (theme.primary.dark)} 0%, ${({ theme }) => (theme.secondary.dark)} 100%)`
-    }
-});
-
 const ArticlesList = () => {
     const { theme } = useThemeContext();
     const navigate = useNavigate();
+    const {
+        articles,
+        loading,
+        error,
+        totalPages,
+        getAllArticles,
+        clearError
+    } = useContext(ArticleContext);
 
     const [favorites, setFavorites] = useState([]);
     const [bookmarks, setBookmarks] = useState([]);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-
     const [currentPage, setCurrentPage] = useState(1);
-    const articlesPerPage = 9;
-    const totalPages = Math.ceil(articlesData.length / articlesPerPage);
-
-    const indexOfLastArticle = currentPage * articlesPerPage;
-    const indexOfFirstArticle = indexOfLastArticle - articlesPerPage;
-    const currentArticles = articlesData.slice(indexOfFirstArticle, indexOfLastArticle);
 
     useEffect(() => {
         const savedFavorites = localStorage.getItem('articleFavorites');
@@ -85,12 +71,35 @@ const ArticlesList = () => {
 
         if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
         if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
-    }, []);
+
+        loadArticles(currentPage).then(r => console.log(r));
+    }, [currentPage]);
 
     useEffect(() => {
         localStorage.setItem('articleFavorites', JSON.stringify(favorites));
         localStorage.setItem('articleBookmarks', JSON.stringify(bookmarks));
     }, [favorites, bookmarks]);
+
+    useEffect(() => {
+        if (error) {
+            showSnackbar(error, 'error');
+            clearError();
+        }
+    }, [clearError, error]);
+
+    const loadArticles = async (page) => {
+        try {
+            await getAllArticles(null, page - 1);
+        } catch (err) {
+            console.error('Ошибка загрузки статей:', err);
+        }
+    };
+
+    const handlePageChange = (event, value) => {
+        setCurrentPage(value);
+        loadArticles(value);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const handleFavoriteClick = (articleId) => {
         if (favorites.includes(articleId)) {
@@ -114,7 +123,7 @@ const ArticlesList = () => {
 
     const handleShareClick = async (articleId) => {
         const url = `${window.location.origin}/articles/${articleId}`;
-        const article = articlesData.find(a => a.id === articleId);
+        const article = articles.find(a => a.id === articleId);
 
         try {
             if (navigator.share) {
@@ -143,14 +152,17 @@ const ArticlesList = () => {
         setSnackbarOpen(false);
     };
 
-    const handlePageChange = (event, value) => {
-        setCurrentPage(value);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
     const handleBackClick = () => {
         navigate(-1);
     };
+
+    if (loading && !articles.length) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress size={60} />
+            </Box>
+        );
+    }
 
     return (
         <Box sx={{ minHeight: '100vh', py: 8 }}>
@@ -179,8 +191,14 @@ const ArticlesList = () => {
                     <Box sx={{ width: 100 }} />
                 </Box>
 
+                {loading && articles.length > 0 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                        <CircularProgress />
+                    </Box>
+                )}
+
                 <Grid container spacing={4} justifyContent="center">
-                    {currentArticles.map((article) => (
+                    {articles.map((article) => (
                         <Grid
                             item
                             xs={12}
@@ -195,7 +213,7 @@ const ArticlesList = () => {
                                     <CardMedia
                                         component="img"
                                         height="220"
-                                        image={article.image}
+                                        image={article.imageUrl || '/default-article-image.jpg'}
                                         alt={article.title}
                                         className="media"
                                         sx={{
@@ -218,7 +236,7 @@ const ArticlesList = () => {
                                             fontWeight: 'bold',
                                             boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
                                         }}>
-                                            {article.category}
+                                            {article.category || 'Без категории'}
                                         </Box>
                                         <Typography
                                             gutterBottom
@@ -240,7 +258,7 @@ const ArticlesList = () => {
                                             color={theme.text.secondary}
                                             sx={{ mb: 2, fontSize: '0.95rem' }}
                                         >
-                                            {article.excerpt}
+                                            {article.excerpt || article.content.substring(0, 150) + '...'}
                                         </Typography>
                                     </CardContent>
                                 </Box>
@@ -252,7 +270,7 @@ const ArticlesList = () => {
                                         sx={{ display: 'flex', alignItems: 'center' }}
                                     >
                                         <ArticleIcon sx={{ fontSize: '1rem', mr: 0.5 }} />
-                                        Опубликована {article.readTime}
+                                        {new Date(article.createdAt).toLocaleDateString()}
                                     </Typography>
                                     <Box>
                                         <IconButton
@@ -288,24 +306,26 @@ const ArticlesList = () => {
                     ))}
                 </Grid>
 
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 4 }}>
-                    <Pagination
-                        count={totalPages}
-                        page={currentPage}
-                        onChange={handlePageChange}
-                        color="primary"
-                        size="large"
-                        sx={{
-                            '& .MuiPaginationItem-root': {
-                                color: theme.text.primary,
-                                '&.Mui-selected': {
-                                    backgroundColor: theme.primary.main,
-                                    color: theme.primary.contrastText
+                {totalPages > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 4 }}>
+                        <Pagination
+                            count={totalPages}
+                            page={currentPage}
+                            onChange={handlePageChange}
+                            color="primary"
+                            size="large"
+                            sx={{
+                                '& .MuiPaginationItem-root': {
+                                    color: theme.text.primary,
+                                    '&.Mui-selected': {
+                                        backgroundColor: theme.primary.main,
+                                        color: theme.primary.contrastText
+                                    }
                                 }
-                            }
-                        }}
-                    />
-                </Box>
+                            }}
+                        />
+                    </Box>
+                )}
             </Container>
 
             <Snackbar

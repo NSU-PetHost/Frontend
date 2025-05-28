@@ -1,18 +1,32 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://193.53.127.202:8080";
+const API_BASE_URL_CONTENT = "http://193.53.127.202:8083";
 
-const makeRequest = async ( method, url, dto, headers = { 'Content-Type': 'application/json' } ) => {
+const makeRequest = async ( method, url, dto, headers = { 'Content-Type': 'application/json' }, service = "auth" ) => {
   try {
+    let url_base;
+    switch (service) {
+      case 'auth':
+        url_base = API_BASE_URL;
+        break;
+      case 'content':
+        url_base = API_BASE_URL_CONTENT;
+        break;
+      default:
+        url_base = API_BASE_URL;
+        break;
+    }
     console.log({
       method,
-      url: `${API_BASE_URL}${url}`,
+      url: `${url_base}${url}`,
       data: dto,
       headers,
     });
+
     const response = await axios({
       method,
-      url: `${API_BASE_URL}${url}`,
+      url: `${url_base}${url}`,
       data: dto,
       headers,
     });
