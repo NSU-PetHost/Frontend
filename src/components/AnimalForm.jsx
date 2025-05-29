@@ -5,18 +5,32 @@ import {
     Container,
     TextField,
     Alert,
-    Paper, InputLabel, Select, MenuItem, FormControl
+    Paper,
+    InputLabel,
+    Select,
+    MenuItem,
+    FormControl,
+    CircularProgress
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import { useThemeContext } from "../contexts/ThemeContext.jsx";
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format } from 'date-fns';
 import ruLocale from 'date-fns/locale/ru';
-import {animalTypes, animalSpecies} from "./animals";
+import { AnimalContext } from '../contexts/AnimalProvider';
 
 const AnimalForm = () => {
     const { theme } = useThemeContext();
+    const {
+        createAnimal,
+        loading,
+        error,
+        clearError,
+        animalTypes,
+        getTypes
+    } = useContext(AnimalContext);
+
     const [animal, setAnimal] = useState({
         name: '',
         age: '',
@@ -24,14 +38,25 @@ const AnimalForm = () => {
         species: '',
         birthDate: null
     });
-    const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+    const [speciesOptions, setSpeciesOptions] = useState([]);
+
+    useEffect(() => {
+        getTypes();
+    }, []);
 
     const handleChange = (name, value) => {
         setAnimal(prev => ({
             ...prev,
             [name]: value
         }));
+
+        // When type changes, reset species and load new species options
+        if (name === 'type') {
+            setAnimal(prev => ({ ...prev, species: '' }));
+            const selectedType = animalTypes.find(t => t.name === value);
+            setSpeciesOptions(selectedType?.species || []);
+        }
     };
 
     const handleDateChange = (date) => {
@@ -43,33 +68,51 @@ const AnimalForm = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        clearError();
+        setSuccess(null);
+
         try {
-            // Здесь будет логика отправки данных
-            const formattedData = {
-                ...animal,
-                birthDate: animal.birthDate ? format(animal.birthDate, 'yyyy-MM-dd') : null
-            };
-            console.log('Данные для отправки:', formattedData);
+            const formData = new FormData();
+            formData.append('name', animal.name);
+            formData.append('age', animal.age);
+            formData.append('type', animal.type);
+            formData.append('species', animal.species);
+
+            if (animal.birthDate) {
+                formData.append('birthDate', format(animal.birthDate, 'yyyy-MM-dd'));
+            }
+
+            await createAnimal(formData);
 
             setSuccess('Питомец успешно добавлен!');
-            setAnimal({ name: '', age: '', type: '', species: '', birthDate: null });
+            setAnimal({
+                name: '',
+                age: '',
+                type: '',
+                species: '',
+                birthDate: null
+            });
 
             setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
             console.error('Ошибка при добавлении:', err);
-            setError(err.message || 'Ошибка при добавлении питомца');
         }
     };
 
     const clearMessages = () => {
-        setError(null);
+        clearError();
         setSuccess(null);
     };
 
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ruLocale}>
             <Container maxWidth="md" sx={{ py: 8 }}>
-                <Paper elevation={3} sx={{ p: 4, overflow: 'hidden', borderRadius: 4, bgcolor: theme.background.paper }}>
+                <Paper elevation={3} sx={{
+                    p: 4,
+                    overflow: 'hidden',
+                    borderRadius: 4,
+                    bgcolor: theme.background.paper
+                }}>
                     <Box sx={{ maxWidth: '100%', mx: 'auto' }}>
                         <Typography
                             variant="h2"
@@ -114,6 +157,7 @@ const AnimalForm = () => {
                                 onChange={(e) => handleChange('name', e.target.value)}
                                 required
                                 placeholder="Введите имя"
+                                disabled={loading}
                             />
 
                             <TextField
@@ -127,34 +171,42 @@ const AnimalForm = () => {
                                 required
                                 placeholder="Введите возраст"
                                 inputProps={{ min: 0, max: 50 }}
+                                disabled={loading}
                             />
 
-                            <FormControl fullWidth>
+                            <FormControl fullWidth disabled={loading}>
                                 <InputLabel>Тип животного</InputLabel>
                                 <Select
                                     value={animal.type}
                                     label="Тип животного"
                                     onChange={(e) => handleChange('type', e.target.value)}
-                                    variant={"outlined"}>
+                                    required
+                                >
                                     {animalTypes.map((type) => (
-                                        <MenuItem key={type} value={type}>{type}</MenuItem>
+                                        <MenuItem key={type.id} value={type.name}>
+                                            {type.name}
+                                        </MenuItem>
                                     ))}
                                 </Select>
                             </FormControl>
-                            {animal.type &&
-                                <FormControl fullWidth>
+
+                            {animal.type && (
+                                <FormControl fullWidth disabled={loading}>
                                     <InputLabel>Вид животного</InputLabel>
                                     <Select
                                         value={animal.species}
                                         label="Вид животного"
                                         onChange={(e) => handleChange('species', e.target.value)}
-                                        variant={"outlined"}>
-                                        {animalSpecies[animal.type].map((s) => (
-                                            <MenuItem key={s} value={s}>{s}</MenuItem>
+                                        required
+                                    >
+                                        {speciesOptions.map((species) => (
+                                            <MenuItem key={species} value={species}>
+                                                {species}
+                                            </MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
-                            }
+                            )}
 
                             <DatePicker
                                 label="Дата рождения"
@@ -166,16 +218,25 @@ const AnimalForm = () => {
                                         fullWidth
                                         required
                                         sx={{ mt: 1 }}
+                                        disabled={loading}
                                     />
                                 )}
                                 inputFormat="dd.MM.yyyy"
+                                disabled={loading}
                             />
 
                             <Button
                                 type="submit"
                                 variant="contained"
                                 size="large"
-                                disabled={!animal.name || !animal.age || !animal.species || !animal.birthDate}
+                                disabled={
+                                    loading ||
+                                    !animal.name ||
+                                    !animal.age ||
+                                    !animal.type ||
+                                    !animal.species ||
+                                    !animal.birthDate
+                                }
                                 sx={{
                                     mt: 2,
                                     bgcolor: theme.primary.main,
@@ -186,7 +247,11 @@ const AnimalForm = () => {
                                     fontSize: '1.1rem'
                                 }}
                             >
-                                Добавить питомца
+                                {loading ? (
+                                    <CircularProgress size={24} color="inherit" />
+                                ) : (
+                                    'Добавить питомца'
+                                )}
                             </Button>
                         </Box>
                     </Box>

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
     Box,
     Typography,
@@ -18,61 +18,102 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions, MenuItem, Select, InputLabel, FormControl
+    DialogActions,
+    MenuItem,
+    Select,
+    InputLabel,
+    FormControl,
+    CircularProgress
 } from '@mui/material';
-import {Edit, Add, Pets, Save, Close, CameraAlt, Delete} from '@mui/icons-material';
+import { Edit, Add, Pets, Save, Close, CameraAlt, Delete } from '@mui/icons-material';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { ru } from 'date-fns/locale';
 import { format } from 'date-fns';
+import ru from 'date-fns/locale/ru';
 import { useThemeContext } from "../contexts/ThemeContext";
-import {animalSpecies, animalTypes} from "./animals";
-import {pets} from "./pets";
+import { AnimalContext } from '../contexts/AnimalProvider';
 
-const PetProfile = () => {
-    const [petData, setPetData] = useState(pets[0]);
+const PetProfile = ({ petId }) => {
+    const { theme } = useThemeContext();
+    const {
+        animals,
+        loading,
+        animalTypes,
+        getTypes,
+        updateAnimal,
+        getPets,
+        getStatistics,
+        createStatistics
+    } = useContext(AnimalContext);
 
+    const [petData, setPetData] = useState(null);
     const [editMode, setEditMode] = useState(false);
-    const [tempData, setTempData] = useState({
-        name: petData.name,
-        age: petData.age,
-        type: petData.type,
-        species: petData.species,
-        weight: petData.weight
-    });
-
+    const [tempData, setTempData] = useState(null);
     const [date, setDate] = useState(new Date());
-    const [healthNotes, setHealthNotes] = useState([
-        { id: 1, type: 'appetite', value: 'Хороший', date: '2025-04-07T12:30:00' },
-        { id: 2, type: 'activity', value: 'Низкая', date: '2025-04-07T14:30:00' }
-    ]);
+    const [healthNotes, setHealthNotes] = useState([]);
     const [sliderValues, setSliderValues] = useState({
         thirst: 50,
         activity: 30,
         digestion: 80
     });
     const [noteText, setNoteText] = useState('');
-    const [events, setEvents] = useState([
-        { id: 1, title: 'Медосмотр', date: '2025-04-07T14:30:00', completed: false }
-    ]);
+    const [events, setEvents] = useState([]);
     const [openEventDialog, setOpenEventDialog] = useState(false);
     const [newEvent, setNewEvent] = useState({ title: '', date: new Date() });
     const fileInputRef = useRef(null);
-    const { theme } = useThemeContext();
+
+    useEffect(() => {
+        getTypes();
+    }, []);
+
+    useEffect(() => {
+        const loadPetData = async () => {
+            try {
+                await getPets();
+                if (petId) {
+                    const pet = animals.find(a => a.id === petId);
+                    if (pet) {
+                        setPetData(pet);
+                        setTempData({
+                            name: pet.name,
+                            age: pet.age,
+                            type: pet.type,
+                            species: pet.species,
+                            weight: pet.weight
+                        });
+                        // Load statistics for the pet
+                        const stats = await getStatistics(petId, format(new Date(), 'yyyy-MM-dd'));
+                        setHealthNotes(stats);
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading pet data:', err);
+            }
+        };
+
+        loadPetData();
+    }, [petId, animals]);
 
     const handleInputChange = (field, value) => {
-        setTempData({ ...tempData, [field]: value });
+        setTempData(prev => ({
+            ...prev,
+            [field]: value
+        }));
     };
 
-    const handlePhotoUpload = (e) => {
+    const handlePhotoUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setPetData({ ...petData, photo: reader.result });
-            };
-            reader.readAsDataURL(file);
+            const formData = new FormData();
+            formData.append('photo', file);
+
+            try {
+                const updatedPet = await updateAnimal(petId, formData);
+                setPetData(updatedPet);
+            } catch (err) {
+                console.error('Error updating photo:', err);
+            }
         }
     };
 
@@ -80,70 +121,87 @@ const PetProfile = () => {
         fileInputRef.current.click();
     };
 
-    const handleAddNote = () => {
+    const handleSaveProfile = async () => {
+        try {
+            const formData = new FormData();
+            formData.append('name', tempData.name);
+            formData.append('age', tempData.age);
+            formData.append('type', tempData.type);
+            formData.append('species', tempData.species);
+            formData.append('weight', tempData.weight);
+
+            const updatedPet = await updateAnimal(petId, formData);
+            setPetData(updatedPet);
+            setEditMode(false);
+        } catch (err) {
+            console.error('Error updating pet:', err);
+        }
+    };
+
+    const handleAddNote = async () => {
         if (!noteText.trim()) return;
 
-        const newNote = {
-            id: Date.now(),
-            type: 'note',
-            value: noteText,
-            date: new Date().toISOString()
-        };
-        setHealthNotes([...healthNotes, newNote]);
-        setNoteText('');
+        try {
+            const newNote = {
+                type: 'note',
+                value: noteText,
+                date: new Date().toISOString()
+            };
+
+            await createStatistics({
+                animalID: petId,
+                type: 'note',
+                value: noteText
+            });
+
+            setHealthNotes(prev => [...prev, { ...newNote, id: Date.now() }]);
+            setNoteText('');
+        } catch (err) {
+            console.error('Error adding note:', err);
+        }
     };
 
-    const handleEditNote = (id, newValue) => {
-        setHealthNotes(healthNotes.map(note =>
-            note.id === id ? { ...note, value: newValue } : note
-        ));
+    const handleSaveSliders = async () => {
+        try {
+            const noteValue = `Жажда: ${sliderValues.thirst}, Активность: ${sliderValues.activity}, ЖКТ: ${sliderValues.digestion}`;
+
+            await createStatistics({
+                animalID: petId,
+                type: 'health',
+                value: noteValue
+            });
+
+            setHealthNotes(prev => [...prev, {
+                id: Date.now(),
+                type: 'health',
+                value: noteValue,
+                date: new Date().toISOString()
+            }]);
+        } catch (err) {
+            console.error('Error saving health stats:', err);
+        }
     };
 
-    const handleDeleteNote = (id) => {
-        setHealthNotes(healthNotes.filter(note => note.id !== id));
-    };
+    if (loading && petData) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress size={60} />
+            </Box>
+        );
+    }
 
-    // Обработчики для слайдеров
-    const handleSliderChange = (name) => (event, newValue) => {
-        setSliderValues(prev => ({ ...prev, [name]: newValue }));
-    };
-
-    const handleSaveSliders = () => {
-        const newNote = {
-            id: Date.now(),
-            type: 'health',
-            value: `Жажда: ${sliderValues.thirst}, Активность: ${sliderValues.activity}, ЖКТ: ${sliderValues.digestion}`,
-            date: new Date().toISOString()
-        };
-        setHealthNotes([...healthNotes, newNote]);
-    };
-
-    const handleAddEvent = () => {
-        const newEventItem = {
-            id: Date.now(),
-            title: newEvent.title,
-            date: newEvent.date.toISOString(),
-            completed: false
-        };
-        setEvents([...events, newEventItem]);
-        setOpenEventDialog(false);
-        setNewEvent({ title: '', date: new Date() });
-    };
-
-    const handleToggleEvent = (id) => {
-        setEvents(events.map(event =>
-            event.id === id ? { ...event, completed: !event.completed } : event
-        ));
-    };
-
-    const handleDeleteEvent = (id) => {
-        setEvents(events.filter(event => event.id !== id));
-    };
+    if (petData) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <Typography variant="h6">Питомец не найден</Typography>
+            </Box>
+        );
+    }
 
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ru}>
             <Box sx={{ display: 'flex', mb: 9, mt: 7, gap: 2 }}>
-                {/* Левая колонка - Профиль и показатели */}
+                {/* Left column - Profile and health indicators */}
                 <Box sx={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Card sx={{ borderRadius: 3, boxShadow: 3, width: "100%", position: 'relative', overflow: 'visible', mt: 8 }}>
                         <Box sx={{ position: 'relative' }}>
@@ -238,20 +296,6 @@ const PetProfile = () => {
                                             </Select>
                                         </FormControl>
                                     </Box>
-                                    {tempData.type && (
-                                        <FormControl fullWidth>
-                                            <InputLabel>Вид животного</InputLabel>
-                                            <Select
-                                                value={tempData.species}
-                                                label="Вид животного"
-                                                onChange={(e) => handleInputChange('species', e.target.value)}
-                                                variant={"outlined"}>
-                                                {animalSpecies[tempData.type].map((s) => (
-                                                    <MenuItem key={s} value={s}>{s}</MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    )}
 
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                         <TextField
@@ -329,7 +373,7 @@ const PetProfile = () => {
                                 <Typography gutterBottom variant="h6"><strong>Жажда</strong></Typography>
                                 <Slider
                                     value={sliderValues.thirst}
-                                    onChange={handleSliderChange('thirst')}
+                                    onChange={handleSaveSliders('thirst')}
                                     valueLabelDisplay="auto"
                                     marks={[
                                         { value: 0, label: 'Низкая' },
@@ -342,7 +386,7 @@ const PetProfile = () => {
                                 <Typography gutterBottom variant="h6"><strong>Активность</strong></Typography>
                                 <Slider
                                     value={sliderValues.activity}
-                                    onChange={handleSliderChange('activity')}
+                                    onChange={handleSaveSliders('activity')}
                                     valueLabelDisplay="auto"
                                     marks={[
                                         { value: 0, label: 'Низкая' },
@@ -444,6 +488,7 @@ const PetProfile = () => {
                     </Card>
                 </Box>
 
+                {/* Right column - Events and health notes */}
                 <Box sx={{ flex: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
                         <CardContent>
@@ -528,6 +573,7 @@ const PetProfile = () => {
                 </Box>
             </Box>
 
+            {/* Event dialog */}
             <Dialog open={openEventDialog} onClose={() => setOpenEventDialog(false)}>
                 <DialogTitle>Добавить новое событие</DialogTitle>
                 <DialogContent>
@@ -564,7 +610,7 @@ const PetProfile = () => {
     );
 };
 
-// Компонент для редактируемой заметки
+// EditableNoteItem component remains the same
 const EditableNoteItem = ({ note, onEdit, onDelete }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(note.value);

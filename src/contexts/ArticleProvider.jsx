@@ -145,14 +145,33 @@ export const ArticleProvider = ({ children }) => {
     const getAllArticles = async (date = null, page = 0) => {
         setLoading(true);
         try {
+            const accessToken = localStorage.getItem('accessToken');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            if (accessToken) {
+                headers['Authorization'] = `Bearer ${accessToken}`;
+            }
+
             const url = date
                 ? `/api/v1/articles/all?date=${date}&page=${page}`
                 : `/api/v1/articles/all?page=${page}`;
 
-            const response = await makeRequest('GET', url, null, { 'Content-Type': 'application/json' }, 'content');
-            setArticles(response.content || []);
-            setTotalPages(response.totalPages || 0);
-            return response;
+            const response = await makeRequest('GET', url, null, headers, 'content');
+
+            if (response.status === 401) {
+                throw new Error('Authentication required');
+            }
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch articles');
+            }
+
+            const data = await response.json();
+            setArticles(data.content || []);
+            setTotalPages(data.totalPages || 0);
+            return data;
         } catch (err) {
             setError(err.message);
             throw err;

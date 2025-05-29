@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
     Box,
     Container,
@@ -12,7 +12,7 @@ import {
     keyframes,
     Snackbar,
     Alert,
-    IconButton
+    IconButton, CircularProgress
 } from '@mui/material';
 import {
     Article as ArticleIcon,
@@ -23,7 +23,7 @@ import {
 } from '@mui/icons-material';
 import { useThemeContext } from "../contexts/ThemeContext.jsx";
 import { useNavigate } from "react-router-dom";
-import {articlesData} from "./articlesData";
+import {ArticleContext} from "../contexts/ArticleProvider";
 
 const floatAnimation = keyframes`
     0% { transform: translateY(0); }
@@ -63,6 +63,13 @@ const GradientButton = styled(Button)({
 const Articles = () => {
     const { theme } = useThemeContext();
     const navigate = useNavigate();
+    const {
+        articles,
+        loading,
+        error,
+        getAllArticles,
+        clearError
+    } = useContext(ArticleContext);
 
     const [favorites, setFavorites] = useState([]);
     const [bookmarks, setBookmarks] = useState([]);
@@ -77,7 +84,24 @@ const Articles = () => {
 
         if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
         if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
+
+        loadArticles();
     }, []);
+
+    useEffect(() => {
+        if (error) {
+            showSnackbar(error, 'error');
+            clearError();
+        }
+    }, [error]);
+
+    const loadArticles = async () => {
+        try {
+            await getAllArticles();
+        } catch (err) {
+            console.error('Error loading articles:', err);
+        }
+    };
 
     useEffect(() => {
         localStorage.setItem('articleFavorites', JSON.stringify(favorites));
@@ -110,9 +134,9 @@ const Articles = () => {
 
         if (navigator.share) {
             navigator.share({
-                title: articlesData.find(a => a.id === articleId)?.title,
-                text: articlesData.find(a => a.id === articleId)?.excerpt,
-                url: shareUrl
+                title: articles.find(a => a.id === articleId)?.title,
+                text: articles.find(a => a.id === articleId)?.excerpt,
+                imageUrl: shareUrl
             }).catch(() => {
                 copyToClipboard(shareUrl);
             });
@@ -140,6 +164,13 @@ const Articles = () => {
     const handleViewAllArticles = () => {
         navigate('/articles/all');
     };
+    if (loading && !articles.length) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress size={60} />
+            </Box>
+        );
+    }
 
     return (
         <Box sx={{ minHeight: '100vh', py: 8 }}>
@@ -169,9 +200,15 @@ const Articles = () => {
                         Откройте для себя последние советы и рекомендации по уходу, дрессировке, питанию и многому другому от наших экспертов.
                     </Typography>
                 </Box>
+                {loading && articles.length > 0 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                        <CircularProgress />
+                    </Box>
+                )}
+
 
                 <Grid container spacing={4} justifyContent="center">
-                    {articlesData.slice(0, 6).map((article) => (
+                    {articles.slice(0, 6).map((article) => (
                         <Grid
                             item
                             xs={12}
@@ -186,7 +223,7 @@ const Articles = () => {
                                     <CardMedia
                                         component="img"
                                         height="220"
-                                        image={article.image}
+                                        image={article.imageUrl || '/default-article.jpg'}
                                         alt={article.title}
                                         className="media"
                                         sx={{
@@ -196,21 +233,6 @@ const Articles = () => {
                                         }}
                                     />
                                     <CardContent sx={{ position: 'relative' }}>
-                                        <Box sx={{
-                                            position: 'absolute',
-                                            top: -20,
-                                            right: 20,
-                                            backgroundColor: theme.secondary.main,
-                                            color: 'white',
-                                            px: 2,
-                                            py: 0.5,
-                                            borderRadius: '50px',
-                                            fontSize: '0.8rem',
-                                            fontWeight: 'bold',
-                                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-                                        }}>
-                                            {article.category}
-                                        </Box>
                                         <Typography
                                             gutterBottom
                                             variant="h5"
@@ -231,7 +253,7 @@ const Articles = () => {
                                             color={theme.text.secondary}
                                             sx={{ mb: 2, fontSize: '0.95rem' }}
                                         >
-                                            {article.excerpt}
+                                            {article.excerpt || article.text?.substring(0, 100) + '...'}
                                         </Typography>
                                     </CardContent>
                                 </Box>

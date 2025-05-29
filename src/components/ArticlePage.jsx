@@ -22,6 +22,9 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import { useThemeContext } from '../contexts/ThemeContext.jsx';
 import {articlesData} from "./articlesData";
+import rehypeHighlight from "rehype-highlight";
+import remarkGfm from "remark-gfm";
+import ReactMarkdown from "react-markdown";
 
 const ArticlePage = () => {
     const { theme } = useThemeContext();
@@ -104,27 +107,36 @@ const ArticlePage = () => {
                     }}>
                 </Box>
 
-                <Container maxWidth="md" sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
-                    {article.content.map((paragraph, index) => (
-                        <Typography
-                            key={index}
-                            paragraph
-                            sx={{
-                                fontSize: { xs: '1rem', sm: '1.1rem' },
-                                lineHeight: 1.8,
-                                mb: 3,
-                                color: theme.text.primary,
-                                textAlign: 'justify'
-                            }}
-                        >
-                            {paragraph}
-                        </Typography>
-                    ))}
-                </Container>
+                <ReactMarkdown
+                    rehypePlugins={[rehypeHighlight]}
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                        img: ({ node, ...props }) => (
+                            <img style={{ maxWidth: '100%' }} {...props} />
+                        ),
+                        code({ node, inline, className, children, ...props }) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline && match ? (
+                                <div className="code-block">
+                                    <div className="language-tag">{match[1]}</div>
+                                    <code className={className} {...props}>
+                                        {children}
+                                    </code>
+                                </div>
+                            ) : (
+                                <code className={className} {...props}>
+                                    {children}
+                                </code>
+                            );
+                        }
+                    }}
+                >
+                    ...
+                </ReactMarkdown>
 
                 <Divider sx={{ my: 4 }} />
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box mb={7} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Button
                         startIcon={<ArrowBack />}
                         component={Link}
@@ -133,7 +145,7 @@ const ArticlePage = () => {
                     >
                         Все статьи
                     </Button>
-                    <Box>
+                    <Box >
                         <IconButton sx={{ color: theme.primary.main }}>
                             <Favorite />
                         </IconButton>
