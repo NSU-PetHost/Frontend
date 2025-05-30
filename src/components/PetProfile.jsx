@@ -44,7 +44,8 @@ const PetProfile = ({ petId }) => {
         updateAnimal,
         getPets,
         getStatistics,
-        createStatistics
+        createStatistics,
+        findImage
     } = useContext(AnimalContext);
 
     const [petData, setPetData] = useState(null);
@@ -62,6 +63,7 @@ const PetProfile = ({ petId }) => {
     const [openEventDialog, setOpenEventDialog] = useState(false);
     const [newEvent, setNewEvent] = useState({ title: '', date: new Date() });
     const fileInputRef = useRef(null);
+    const [image, setImage] = useState(null);
 
     useEffect(() => {
         getTypes();
@@ -77,12 +79,12 @@ const PetProfile = ({ petId }) => {
                         setPetData(pet);
                         setTempData({
                             name: pet.name,
-                            age: pet.age,
-                            type: pet.type,
-                            species: pet.species,
+                            animalType: pet.animalType,
+                            dateOfBirth: pet.dateOfBirth,
                             weight: pet.weight
                         });
-                        // Load statistics for the pet
+                        const imgRequest = await findImage(pet.imageID);
+                        setImage(imgRequest);
                         const stats = await getStatistics(petId, format(new Date(), 'yyyy-MM-dd'));
                         setHealthNotes(stats);
                     }
@@ -127,7 +129,6 @@ const PetProfile = ({ petId }) => {
             formData.append('name', tempData.name);
             formData.append('age', tempData.age);
             formData.append('type', tempData.type);
-            formData.append('species', tempData.species);
             formData.append('weight', tempData.weight);
 
             const updatedPet = await updateAnimal(petId, formData);

@@ -33,13 +33,11 @@ const AnimalForm = () => {
 
     const [animal, setAnimal] = useState({
         name: '',
-        age: '',
-        type: '',
-        species: '',
-        birthDate: null
+        weight: '',
+        petType: '',
+        dateOfBirth: null
     });
     const [success, setSuccess] = useState(null);
-    const [speciesOptions, setSpeciesOptions] = useState([]);
 
     useEffect(() => {
         getTypes();
@@ -50,19 +48,12 @@ const AnimalForm = () => {
             ...prev,
             [name]: value
         }));
-
-        // When type changes, reset species and load new species options
-        if (name === 'type') {
-            setAnimal(prev => ({ ...prev, species: '' }));
-            const selectedType = animalTypes.find(t => t.name === value);
-            setSpeciesOptions(selectedType?.species || []);
-        }
     };
 
     const handleDateChange = (date) => {
         setAnimal(prev => ({
             ...prev,
-            birthDate: date
+            dateOfBirth: date
         }));
     };
 
@@ -73,13 +64,13 @@ const AnimalForm = () => {
 
         try {
             const formData = new FormData();
+            const selectedType = animalTypes.find(type => type.name === animal.petType);
             formData.append('name', animal.name);
-            formData.append('age', animal.age);
-            formData.append('type', animal.type);
-            formData.append('species', animal.species);
+            formData.append('weight', animal.weight);
+            formData.append('petTypeId', selectedType.id);
 
-            if (animal.birthDate) {
-                formData.append('birthDate', format(animal.birthDate, 'yyyy-MM-dd'));
+            if (animal.dateOfBirth) {
+                formData.append('dateOfBirth', format(animal.dateOfBirth, 'yyyy-MM-dd'));
             }
 
             await createAnimal(formData);
@@ -87,10 +78,9 @@ const AnimalForm = () => {
             setSuccess('Питомец успешно добавлен!');
             setAnimal({
                 name: '',
-                age: '',
-                type: '',
-                species: '',
-                birthDate: null
+                weight: '',
+                petType: '',
+                dateOfBirth: null
             });
 
             setTimeout(() => setSuccess(null), 3000);
@@ -163,11 +153,11 @@ const AnimalForm = () => {
                             <TextField
                                 fullWidth
                                 variant="outlined"
-                                label="Возраст (лет)"
-                                name="age"
+                                label="Вес (кг)"
+                                name="weight"
                                 type="number"
-                                value={animal.age}
-                                onChange={(e) => handleChange('age', e.target.value)}
+                                value={animal.weight}
+                                onChange={(e) => handleChange('weight', e.target.value)}
                                 required
                                 placeholder="Введите возраст"
                                 inputProps={{ min: 0, max: 50 }}
@@ -177,9 +167,9 @@ const AnimalForm = () => {
                             <FormControl fullWidth disabled={loading}>
                                 <InputLabel>Тип животного</InputLabel>
                                 <Select
-                                    value={animal.type}
+                                    value={animal.petType}
                                     label="Тип животного"
-                                    onChange={(e) => handleChange('type', e.target.value)}
+                                    onChange={(e) => handleChange('petType', e.target.value)}
                                     required
                                 >
                                     {animalTypes.map((type) => (
@@ -190,27 +180,9 @@ const AnimalForm = () => {
                                 </Select>
                             </FormControl>
 
-                            {animal.type && (
-                                <FormControl fullWidth disabled={loading}>
-                                    <InputLabel>Вид животного</InputLabel>
-                                    <Select
-                                        value={animal.species}
-                                        label="Вид животного"
-                                        onChange={(e) => handleChange('species', e.target.value)}
-                                        required
-                                    >
-                                        {speciesOptions.map((species) => (
-                                            <MenuItem key={species} value={species}>
-                                                {species}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            )}
-
                             <DatePicker
                                 label="Дата рождения"
-                                value={animal.birthDate}
+                                value={animal.dateOfBirth}
                                 onChange={handleDateChange}
                                 renderInput={(params) => (
                                     <TextField
@@ -232,10 +204,9 @@ const AnimalForm = () => {
                                 disabled={
                                     loading ||
                                     !animal.name ||
-                                    !animal.age ||
-                                    !animal.type ||
-                                    !animal.species ||
-                                    !animal.birthDate
+                                    !animal.weight ||
+                                    !animal.petType ||
+                                    !animal.dateOfBirth
                                 }
                                 sx={{
                                     mt: 2,

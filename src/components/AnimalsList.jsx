@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
     Box,
     Typography,
@@ -15,13 +15,17 @@ import PetsIcon from '@mui/icons-material/Pets';
 import {useThemeContext} from "../contexts/ThemeContext.jsx";
 import {correctYearWord} from "../utils/utils";
 import {useNavigate} from "react-router-dom";
-import {pets} from "./pets";
+import {AnimalContext} from "../contexts/AnimalProvider";
 
-const AnimalsList = ({ isLoading = false }) => {
+const AnimalsList = () => {
+    const { animals, loading, getPets, findImage } = useContext(AnimalContext);
     const { theme } = useThemeContext();
-
-
     const navigate = useNavigate();
+
+
+    useEffect(() => {
+        getPets();
+    }, []);
     return (
         <Box ml={8} sx={{
             minHeight: '100vh',
@@ -43,7 +47,7 @@ const AnimalsList = ({ isLoading = false }) => {
                 Ваши питомцы
             </Typography>
 
-            {isLoading ? (
+            {loading ? (
                 <Grid container spacing={3}>
                     {[1, 2, 3].map((item) => (
                         <Grid item xs={12} sm={6} md={4} key={item}>
@@ -53,7 +57,7 @@ const AnimalsList = ({ isLoading = false }) => {
                         </Grid>
                     ))}
                 </Grid>
-            ) : pets.length === 0 ? (
+            ) : animals.length === 0 ? (
                 <Box sx={{
                     textAlign: 'center',
                     p: 4,
@@ -67,7 +71,7 @@ const AnimalsList = ({ isLoading = false }) => {
                 </Box>
             ) : (
                 <Grid container spacing={3}>
-                    {pets.map((pet) => (
+                    {animals.map((pet) => (
                         <Grid item xs={12} sm={6} md={4} key={pet.id}>
                             <Card sx={{
                                 height: '100%',
@@ -79,11 +83,11 @@ const AnimalsList = ({ isLoading = false }) => {
                                     boxShadow: 6
                                 }
                             }}>
-                                {pet.image ? (
+                                {findImage(pet.imageID) ? (
                                     <CardMedia
                                         component="img"
                                         height="160"
-                                        image={pet.image}
+                                        image={findImage(pet.imageID)}
                                         alt={pet.name}
                                     />
                                 ) : (
@@ -109,16 +113,16 @@ const AnimalsList = ({ isLoading = false }) => {
                                             {pet.name}
                                         </Typography>
                                         <Chip
-                                            label={pet.type || 'Неизвестный'}
+                                            label={pet.animalType || 'Неизвестный'}
                                             size="small"
                                             color="secondary"
                                             sx={{ ml: 1, mt: 0.7 }}
                                         />
                                     </Box>
 
-                                    {pet.age && (
+                                    {pet.weight && (
                                         <Typography variant="body2" color={theme.text.secondary}>
-                                            Возраст: {pet.age} {correctYearWord(pet.age)}
+                                            Вес: {pet.weight}
                                         </Typography>
                                     )}
                                 </CardContent>

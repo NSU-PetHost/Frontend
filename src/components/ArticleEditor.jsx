@@ -114,11 +114,11 @@ const ArticleEditor = () => {
 
         try {
             const formData = new FormData();
-            formData.append('title', articleData.title);
-            formData.append('text', articleData.content);
+            console.log(articleData);
+            const url = `/api/v1/articles/create?title=${encodeURIComponent(articleData.title)}&text=${encodeURIComponent(articleData.content)}`;
             formData.append('image', articleData.image);
 
-            const result = await createArticle(formData);
+            const result = await createArticle(url, formData);
             showSnackbar('Статья успешно создана', 'success');
             navigate(`/articles/${result.id}`);
         } catch (error) {

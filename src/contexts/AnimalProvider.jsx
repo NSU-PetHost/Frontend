@@ -1,5 +1,6 @@
-import { createContext, useState } from 'react';
+import {createContext, useContext, useState} from 'react';
 import makeRequest from "../api/makeRequest";
+import {AuthContext} from "./AuthContext";
 
 export const AnimalContext = createContext(undefined);
 
@@ -9,6 +10,8 @@ export const AnimalProvider = ({ children }) => {
     const [statistics, setStatistics] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    const { refreshToken } = useContext(AuthContext);
 
     const clearError = () => setError(null);
 
@@ -27,7 +30,63 @@ export const AnimalProvider = ({ children }) => {
                 'content'
             );
         } catch (err) {
-            setError(err.message);
+            if (err.message.toString() === "Unauthorized: Full authentication is required to access this resource ") {
+                try {
+                    const newAccessToken = await refreshToken();
+                    return await makeRequest(
+                        'POST',
+                        '/api/v1/animals/create',
+                        formData,
+                        {
+                            'Authorization': `Bearer ${newAccessToken}`,
+                            'Content-Type': 'multipart/form-data'
+                        },
+                        'content'
+                    );
+                } catch (refreshError) {
+                    setError(refreshError.response?.data?.message || refreshError.message);
+                    throw refreshError;
+                }
+            }
+            setError(err.response?.data?.message || err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const findImage = async (id) => {
+        setLoading(true);
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            return await makeRequest(
+                'POST',
+                `/api/images/{id}`,
+                null,
+                {
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                'content'
+            );
+        } catch (err) {
+            if (err.message.toString() === "Unauthorized: Full authentication is required to access this resource ") {
+                try {
+                    const newAccessToken = await refreshToken();
+                    return await makeRequest(
+                        'POST',
+                        `/api/images/{id}`,
+                        null,
+                        {
+                            'Authorization': `Bearer ${newAccessToken}`
+                        },
+                        'content'
+                    );
+                } catch (refreshError) {
+                    setError(refreshError.response?.data?.message || refreshError.message);
+                    throw refreshError;
+                }
+            }
+            setError(err.response?.data?.message || err.message);
             throw err;
         } finally {
             setLoading(false);
@@ -49,7 +108,25 @@ export const AnimalProvider = ({ children }) => {
                 'content'
             );
         } catch (err) {
-            setError(err.message);
+            if (err.message.toString() === "Unauthorized: Full authentication is required to access this resource ") {
+                try {
+                    const newAccessToken = await refreshToken();
+                    return await makeRequest(
+                        'PUT',
+                        `/api/v1/animals/updateAnimal?animalId=${animalId}`,
+                        formData,
+                        {
+                            'Authorization': `Bearer ${newAccessToken}`,
+                            'Content-Type': 'multipart/form-data'
+                        },
+                        'content'
+                    );
+                } catch (refreshError) {
+                    setError(refreshError.response?.data?.message || refreshError.message);
+                    throw refreshError;
+                }
+            }
+            setError(err.response?.data?.message || err.message);
             throw err;
         } finally {
             setLoading(false);
@@ -70,7 +147,24 @@ export const AnimalProvider = ({ children }) => {
                 'content'
             );
         } catch (err) {
-            setError(err.message);
+            if (err.message.toString() === "Unauthorized: Full authentication is required to access this resource ") {
+                try {
+                    const newAccessToken = await refreshToken();
+                    return await makeRequest(
+                        'DELETE',
+                        `/api/v1/animals/deleteAnimal?animalId=${animalId}`,
+                        null,
+                        {
+                            'Authorization': `Bearer ${newAccessToken}`
+                        },
+                        'content'
+                    );
+                } catch (refreshError) {
+                    setError(refreshError.response?.data?.message || refreshError.message);
+                    throw refreshError;
+                }
+            }
+            setError(err.response?.data?.message || err.message);
             throw err;
         } finally {
             setLoading(false);
@@ -88,7 +182,22 @@ export const AnimalProvider = ({ children }) => {
             setAnimals(response || []);
             return response;
         } catch (err) {
-            setError(err.message);
+            if (err.message.toString() === "Unauthorized: Full authentication is required to access this resource ") {
+                try {
+                    const newAccessToken = await refreshToken();
+                    console.log(newAccessToken);
+                    const newResponse = await makeRequest('GET', '/api/v1/animals/getPets', null, {
+                        'Authorization': `Bearer ${newAccessToken}`
+                    }, 'content');
+                    setAnimals(newResponse || []);
+                    console.log(animals)
+                    return newResponse;
+                } catch (refreshError) {
+                    setError(refreshError.response?.data?.message || refreshError.message);
+                    throw refreshError;
+                }
+            }
+            setError(err.response?.data?.message || err.message);
             throw err;
         } finally {
             setLoading(false);
@@ -104,7 +213,20 @@ export const AnimalProvider = ({ children }) => {
             setAnimalTypes(response.types || []);
             return response;
         } catch (err) {
-            setError(err.message);
+            if (err.message.toString() === "Unauthorized: Full authentication is required to access this resource ") {
+                try {
+                    const newAccessToken = await refreshToken();
+                    console.log(newAccessToken);
+                    const newResponse = await makeRequest('GET', '/api/v1/animals/getTypes', null, {
+                        'Authorization': `Bearer ${newAccessToken}`}, 'content');
+                    setAnimalTypes(newResponse.types || []);
+                    return newResponse;
+                } catch (refreshError) {
+                    setError(refreshError.response?.data?.message || refreshError.message);
+                    throw refreshError;
+                }
+            }
+            setError(err.response?.data?.message || err.message);
             throw err;
         } finally {
             setLoading(false);
@@ -126,7 +248,25 @@ export const AnimalProvider = ({ children }) => {
                 'content'
             );
         } catch (err) {
-            setError(err.message);
+            if (err.message.toString() === "Unauthorized: Full authentication is required to access this resource ") {
+                try {
+                    const newAccessToken = await refreshToken();
+                    const newSearchParams = new URLSearchParams(params).toString();
+                    return await makeRequest(
+                        'POST',
+                        `/api/v1/animals/createStatistics?${newSearchParams}`,
+                        null,
+                        {
+                            'Authorization': `Bearer ${newAccessToken}`
+                        },
+                        'content'
+                    );
+                } catch (refreshError) {
+                    setError(refreshError.response?.data?.message || refreshError.message);
+                    throw refreshError;
+                }
+            }
+            setError(err.response?.data?.message || err.message);
             throw err;
         } finally {
             setLoading(false);
@@ -150,7 +290,27 @@ export const AnimalProvider = ({ children }) => {
             setStatistics(response || []);
             return response;
         } catch (err) {
-            setError(err.message);
+            if (err.message.toString() === "Unauthorized: Full authentication is required to access this resource ") {
+                try {
+                    const newAccessToken = await refreshToken();
+                    const newResponse = await makeRequest(
+                        'GET',
+                        `/api/v1/animals/getStatistics?animalID=${animalID}&date=${date}`,
+                        null,
+                        {
+                            'Authorization': `Bearer ${newAccessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        'content'
+                    );
+                    setStatistics(newResponse || []);
+                    return newResponse;
+                } catch (refreshError) {
+                    setError(refreshError.response?.data?.message || refreshError.message);
+                    throw refreshError;
+                }
+            }
+            setError(err.response?.data?.message || err.message);
             throw err;
         } finally {
             setLoading(false);
@@ -171,7 +331,8 @@ export const AnimalProvider = ({ children }) => {
             getPets,
             getTypes,
             createStatistics,
-            getStatistics
+            getStatistics,
+            findImage
         }}>
             {children}
         </AnimalContext.Provider>

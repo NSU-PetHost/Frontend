@@ -121,7 +121,8 @@ export const AuthProvider = ({ children }) => {
     const changePassword = async (currentPassword, newPassword) => {
         setLoading(true);
         try {
-            const accessToken = localStorage.getItem('accessToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+            const accessToken = await refreshToken();
             return await makeRequest('POST', '/api/v1/auth/changePassword',
                 {currentPassword, newPassword},
                 {
@@ -130,7 +131,24 @@ export const AuthProvider = ({ children }) => {
                 }
             );
         } catch (err) {
-            setError(err.message);
+            if (err.message.toString() === "Unauthorized: Full authentication is required to access this resource ") {
+                try {
+                    const newAccessToken = await refreshToken();
+                    return await makeRequest(
+                        'POST',
+                        '/api/v1/auth/changePassword',
+                        {currentPassword, newPassword},
+                        {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${newAccessToken}`
+                        }
+                    );
+                } catch (refreshError) {
+                    setError(refreshError.response?.data?.message || refreshError.message);
+                    throw refreshError;
+                }
+            }
+            setError(err.response?.data?.message || err.message);
             throw err;
         } finally {
             setLoading(false);
@@ -147,7 +165,20 @@ export const AuthProvider = ({ children }) => {
                 }
             );
         } catch (err) {
-            setError(err.message);
+            if (err.message.toString() === "Unauthorized: Full authentication is required to access this resource ") {
+                try {
+                    const newAccessToken = await refreshToken();
+                    return await makeRequest('GET', '/api/v1/info/', null,
+                        {
+                            'Authorization': `Bearer ${newAccessToken}`
+                        }
+                    );
+                } catch (refreshError) {
+                    setError(refreshError.response?.data?.message || refreshError.message);
+                    throw refreshError;
+                }
+            }
+            setError(err.response?.data?.message || err.message);
             throw err;
         } finally {
             setLoading(false);
