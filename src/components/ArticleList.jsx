@@ -65,6 +65,7 @@ const ArticlesList = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
     const [currentPage, setCurrentPage] = useState(1);
+    const [loadedImages, setLoadedImages] = useState({});
 
     useEffect(() => {
         const savedFavorites = localStorage.getItem('articleFavorites');
@@ -74,7 +75,31 @@ const ArticlesList = () => {
         if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
 
         loadArticles(currentPage).then(r => console.log(r));
-    }, [currentPage]);
+    }, []);
+
+    const MAX_CONCURRENT_IMAGE_LOADS = 3;
+
+    useEffect(() => {
+        const loadImages = async () => {
+            const queue = [...articles.slice(0, 6)];
+            const newLoadedImages = {};
+
+            while (queue.length > 0) {
+                const batch = queue.splice(0, MAX_CONCURRENT_IMAGE_LOADS);
+                await Promise.all(batch.map(async (article) => {
+                    try {
+                        const imageUrl = await getImage(article.imageID);
+                        newLoadedImages[article.imageID] = imageUrl;
+                    } catch (error) {
+                        newLoadedImages[article.imageID] = '/default-article.jpg';
+                    }
+                }));
+                setLoadedImages(prev => ({ ...prev, ...newLoadedImages }));
+            }
+        };
+
+        loadImages();
+    }, [articles, getImage]);
 
     useEffect(() => {
         localStorage.setItem('articleFavorites', JSON.stringify(favorites));
@@ -214,7 +239,7 @@ const ArticlesList = () => {
                                     <CardMedia
                                         component="img"
                                         height="220"
-                                        image={getImage(article.imageID) || '/default-article-image.jpg'}
+                                        image={loadedImages[article.imageID] || '/default-article-image.jpg'}
                                         alt={article.title}
                                         className="media"
                                         sx={{

@@ -78,6 +78,7 @@ const Articles = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [snackbarSeverity, setSnackbarSeverity] = useState('success');
     const [shareUrl, setShareUrl] = useState('');
+    const [loadedImages, setLoadedImages] = useState({});
 
     useEffect(() => {
         const savedFavorites = localStorage.getItem('articleFavorites');
@@ -88,6 +89,30 @@ const Articles = () => {
 
         loadArticles();
     }, []);
+
+    const MAX_CONCURRENT_IMAGE_LOADS = 3;
+
+    useEffect(() => {
+        const loadImages = async () => {
+            const queue = [...articles.slice(0, 6)];
+            const newLoadedImages = {};
+
+            while (queue.length > 0) {
+                const batch = queue.splice(0, MAX_CONCURRENT_IMAGE_LOADS);
+                await Promise.all(batch.map(async (article) => {
+                    try {
+                        const imageUrl = await getImage(article.imageID);
+                        newLoadedImages[article.imageID] = imageUrl;
+                    } catch (error) {
+                        newLoadedImages[article.imageID] = '/default-article.jpg';
+                    }
+                }));
+                setLoadedImages(prev => ({ ...prev, ...newLoadedImages }));
+            }
+        };
+
+        loadImages();
+    }, [articles, getImage]);
 
     useEffect(() => {
         if (error) {
@@ -224,7 +249,7 @@ const Articles = () => {
                                     <CardMedia
                                         component="img"
                                         height="220"
-                                        image={getImage(article.imageID) || '/default-article.jpg'}
+                                        image={loadedImages[article.imageID] || '/default-article.jpg'}
                                         alt={article.title}
                                         className="media"
                                         sx={{
