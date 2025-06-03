@@ -170,6 +170,46 @@ export const ArticleProvider = ({ children }) => {
         }
     };
 
+    const getImage = async (id) => {
+        setLoading(true);
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+            return await makeRequest(
+                'GET',
+                `/api/images/${id}`,
+                null,
+                {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'accept': 'image/jpeg'
+                },
+                'blob'
+            );
+        } catch (err) {
+            if (err.message.toString() === "Unauthorized: Full authentication is required to access this resource") {
+                try {
+                    const newAccessToken = await refreshToken();
+                    return await makeRequest(
+                        'GET',
+                        `/api/images/${id}`,
+                        null,
+                        {
+                            'Authorization': `Bearer ${newAccessToken}`,
+                            'accept': 'image/jpeg'
+                        },
+                        'blob'
+                    );
+                } catch (refreshError) {
+                    setError(refreshError.response?.data?.message || refreshError.message);
+                    throw refreshError;
+                }
+            }
+            setError(err.response?.data?.message || err.message);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const getArticlesForApproval = async (page = 0) => {
         setLoading(true);
         try {
@@ -333,8 +373,8 @@ export const ArticleProvider = ({ children }) => {
                     const newResponse = await makeRequest('GET', '/api/v1/animals/getPets', null, {
                         'Authorization': `Bearer ${newAccessToken}`
                     }, 'content');
-                    setAnimals(newResponse || []);
-                    console.log(animals)
+                    setArticles(newResponse || []);
+                    console.log(articles)
                     return newResponse;
                 } catch (refreshError) {
                     setError(refreshError.response?.data?.message || refreshError.message);
@@ -362,7 +402,8 @@ export const ArticleProvider = ({ children }) => {
             getArticlesForApproval,
             getArticlesByAuthor,
             getAllArticles,
-            changeArticleCheckedStatus
+            changeArticleCheckedStatus,
+            getImage
         }}>
             {children}
         </ArticleContext.Provider>

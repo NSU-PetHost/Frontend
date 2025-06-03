@@ -68,6 +68,7 @@ const Articles = () => {
         loading,
         error,
         getAllArticles,
+        getImage,
         clearError
     } = useContext(ArticleContext);
 
@@ -223,7 +224,7 @@ const Articles = () => {
                                     <CardMedia
                                         component="img"
                                         height="220"
-                                        image={article.imageUrl || '/default-article.jpg'}
+                                        image={getImage(article.imageID) || '/default-article.jpg'}
                                         alt={article.title}
                                         className="media"
                                         sx={{
@@ -253,7 +254,7 @@ const Articles = () => {
                                             color={theme.text.secondary}
                                             sx={{ mb: 2, fontSize: '0.95rem' }}
                                         >
-                                            {article.excerpt || article.text?.substring(0, 100) + '...'}
+                                            {article.text?.substring(0, 100) + '...'}
                                         </Typography>
                                     </CardContent>
                                 </Box>
@@ -265,7 +266,7 @@ const Articles = () => {
                                         sx={{ display: 'flex', alignItems: 'center' }}
                                     >
                                         <ArticleIcon sx={{ fontSize: '1rem', mr: 0.5 }} />
-                                        Опубликована {article.readTime}
+                                        Опубликована {article.createdAt}
                                     </Typography>
                                     <Box>
                                         <IconButton

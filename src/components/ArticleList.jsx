@@ -55,7 +55,8 @@ const ArticlesList = () => {
         error,
         totalPages,
         getAllArticles,
-        clearError
+        clearError,
+        getImage
     } = useContext(ArticleContext);
 
     const [favorites, setFavorites] = useState([]);
@@ -213,7 +214,7 @@ const ArticlesList = () => {
                                     <CardMedia
                                         component="img"
                                         height="220"
-                                        image={article.imageUrl || '/default-article-image.jpg'}
+                                        image={getImage(article.imageID) || '/default-article-image.jpg'}
                                         alt={article.title}
                                         className="media"
                                         sx={{
@@ -258,7 +259,7 @@ const ArticlesList = () => {
                                             color={theme.text.secondary}
                                             sx={{ mb: 2, fontSize: '0.95rem' }}
                                         >
-                                            {article.excerpt || article.content.substring(0, 150) + '...'}
+                                            { article.text.substring(0, 150) + '...'}
                                         </Typography>
                                     </CardContent>
                                 </Box>
